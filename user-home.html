@@ -1,0 +1,353 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Professional Dashboard</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root { 
+            --primary-blue: #2f8d46; /* GfG style green/blue */
+            --dark-blue: #0f3460;
+            --bg-gray: #f4f7f6;
+            --white: #ffffff;
+            --text-main: #333;
+            --gold: #FFD700;
+            --orange: #FFA500;
+        }
+        
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--bg-gray); display: flex; }
+
+        /* Sidebar Styling (GeeksforGeeks style) */
+        .sidebar { 
+            width: 260px; background: var(--white); height: 100vh; position: fixed; 
+            border-right: 1px solid #ddd; transition: 0.3s; z-index: 1001; overflow-y: auto;
+        }
+        
+        .sidebar-header { padding: 20px; font-size: 22px; font-weight: bold; color: var(--primary-blue); border-bottom: 1px solid #eee; }
+        
+        .nav-group { padding: 10px 0; }
+        .nav-item { 
+            padding: 12px 25px; display: block; color: #444; text-decoration: none; 
+            font-weight: 500; transition: 0.2s; border-left: 4px solid transparent; cursor: pointer;
+        }
+        .nav-item:hover { background: #f0fdf4; color: var(--primary-blue); border-left-color: var(--primary-blue); }
+        
+        /* Main Content Area */
+        .main-content { margin-left: 260px; width: calc(100% - 260px); min-height: 100vh; transition: 0.3s; }
+        
+        .top-header { 
+            background: var(--white); padding: 10px 30px; display: flex; 
+            justify-content: space-between; align-items: center; 
+            position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #eee;
+        }
+
+        .hamburger { display: none; font-size: 24px; cursor: pointer; color: var(--primary-blue); }
+
+        /* Cards Layout */
+        .content-body { padding: 30px; max-width: 1000px; margin: auto; }
+        .section-title { font-size: 24px; color: var(--dark-blue); margin-bottom: 20px; border-left: 5px solid var(--primary-blue); padding-left: 15px; }
+
+        .lesson-card { 
+            background: var(--white); border-radius: 8px; padding: 20px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee;
+        }
+        .lesson-info h3 { margin: 0; font-size: 18px; color: #222; }
+        .lesson-info p { margin: 5px 0 0; font-size: 13px; color: #777; }
+
+        .start-btn { 
+            background: var(--primary-blue); color: white; padding: 8px 20px; 
+            border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; text-align: center;
+        }
+
+        /* 💡 Dual-Tab Styling for Separating Lessons and Exercises */
+        .tab-box { display: flex; background: #e0e0e0; border-radius: 8px; padding: 5px; margin-bottom: 20px; max-width: 300px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; font-weight: bold; cursor: pointer; border-radius: 6px; text-align: center; }
+        .tab-btn.active { background: white; color: var(--primary-blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .profile-links { display: flex; gap: 20px; font-size: 14px; }
+        .profile-links a { color: #555; text-decoration: none; font-weight: 600; cursor: pointer; }
+        .profile-links a:hover { color: var(--primary-blue); }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar { left: -260px; }
+            .sidebar.active { left: 0; }
+            .main-content { margin-left: 0; width: 100%; }
+            .hamburger { display: block; }
+            .profile-links { display: none; }
+            .content-body { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">PrepTreasure</div>
+        <div class="nav-group">
+            <a href="#" class="nav-item" onclick="showLessons()">🏠 Home / Library</a>
+            <a href="#" class="nav-item" onclick="showArticles()">📰 Educational Articles</a>
+            <a href="#" class="nav-item" onclick="showMockTests()">🏆 Mock Tests</a>
+            <a href="purchase.html" class="nav-item">💰 Premium Plans</a>
+            <hr>
+            <div class="nav-group">
+                <a href="profile.html" class="nav-item">My Profile</a>
+                <a href="leaderboard.html" class="nav-item">Leaderboard</a>
+                <a href="#" class="nav-item" style="color:red;" onclick="logoutUser()">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-header">
+            <div class="hamburger" onclick="toggleSidebar()">☰</div>
+            <div class="logo"><img src="logo.jpg" style="height:35px;" alt="Logo"></div>
+            <div class="profile-links">
+                <a onclick="showArticles()">Articles</a>
+                <a href="leaderboard.html">Leaderboard</a>
+                <a href="profile.html">Profile</a>
+                <a href="#" onclick="logoutUser()" style="color:red;">Logout</a>
+            </div>
+        </div>
+
+        <div class="content-body">
+            <div id="welcome-msg" style="margin-bottom: 20px;">
+                <h2 id="hero-welcome" style="margin:0;">Hello, Explorer! 👋</h2>
+                <p style="color:#666; font-size:14px;">What do you want to learn today?</p>
+            </div>
+
+            <div id="lessonArea">
+                <div class="section-title">📚 Library (English Grammar & Topics)</div>
+                
+                <div class="tab-box">
+                    <button class="tab-btn active" id="btn-lessons" onclick="switchLibraryTab('lessons')">Lessons</button>
+                    <button class="tab-btn" id="btn-exercises" onclick="switchLibraryTab('exercises')">Exercises</button>
+                </div>
+
+                <div id="lessons-tab-content">
+                    <div id="dynamic-list"><p style="color:#666; font-weight: 500;">🔄 Syncing database... Loading lessons, please wait.</p></div>
+                </div>
+
+                <div id="exercises-tab-content" style="display: none;">
+                    <div id="dynamic-exercise-list"><p style="color:#666; font-weight: 500;">🔄 Syncing database... Loading exercises, please wait.</p></div>
+                </div>
+            </div>
+
+            <div id="articlesArea" style="display:none;">
+                <div class="section-title" style="border-left-color: var(--orange);">📰 Latest Educational Articles</div>
+                <div id="articles-list"><p style="color:#666; font-weight: 500;">🔄 Syncing database... Loading articles, please wait.</p></div>
+            </div>
+
+            <div id="mockArea" style="display:none;">
+                <div class="section-title" style="border-left-color: #ffa500;">🏆 Mock Tests</div>
+                <div id="mock-list"><p style="color:#666; font-weight: 500;">🔄 Syncing database... Loading tests, please wait.</p></div>
+            </div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const phone = localStorage.getItem("user_phone");
+    const name = localStorage.getItem("user_name") || "Explorer";
+    document.getElementById('hero-welcome').innerText = "Hello, " + name + "! 👋";
+
+    // --- UI Navigation Controls ---
+    window.toggleSidebar = () => document.getElementById("sidebar").classList.toggle("active");
+    window.logoutUser = () => { localStorage.clear(); window.location.href = "index.html"; };
+
+    window.showLessons = () => {
+        document.getElementById("lessonArea").style.display = "block";
+        document.getElementById("articlesArea").style.display = "none";
+        document.getElementById("mockArea").style.display = "none";
+        if(window.innerWidth < 768) toggleSidebar();
+    };
+
+    window.showArticles = () => {
+        document.getElementById("articlesArea").style.display = "block";
+        document.getElementById("lessonArea").style.display = "none";
+        document.getElementById("mockArea").style.display = "none";
+        if(window.innerWidth < 768) toggleSidebar();
+    };
+
+    window.showMockTests = () => {
+        document.getElementById("mockArea").style.display = "block";
+        document.getElementById("lessonArea").style.display = "none";
+        document.getElementById("articlesArea").style.display = "none";
+        if(window.innerWidth < 768) toggleSidebar();
+    };
+
+    // 💡 Active Tab Toggling Engine
+    window.switchLibraryTab = (target) => {
+        const lessonsDiv = document.getElementById("lessons-tab-content");
+        const exercisesDiv = document.getElementById("exercises-tab-content");
+        const btnLessons = document.getElementById("btn-lessons");
+        const btnExercises = document.getElementById("btn-exercises");
+
+        if (target === 'lessons') {
+            lessonsDiv.style.display = "block";
+            exercisesDiv.style.display = "none";
+            btnLessons.classList.add("active");
+            btnExercises.classList.remove("active");
+        } else {
+            lessonsDiv.style.display = "none";
+            exercisesDiv.style.display = "block";
+            btnLessons.classList.remove("active");
+            btnExercises.classList.add("active");
+        }
+    };
+
+    // --- Fetch User Plan and Load Data ---
+    let userPlan = localStorage.getItem("user_plan") || "free";
+
+    if (phone) {
+        onSnapshot(doc(db, "users", phone), (snap) => {
+            if (snap.exists()) {
+                userPlan = (snap.data().plan || "free").toLowerCase();
+                localStorage.setItem("user_plan", userPlan);
+                loadData(userPlan);
+            }
+        });
+    } else { loadData("free"); }
+
+    function loadData(plan) {
+        // 1. 🔥 'topics' కలెక్షన్ లోడ్ సిస్టమ్ (Lessons మరియు Exercises మ్యాపింగ్)
+        onSnapshot(collection(db, "topics"), (snap) => {
+            const lessonsList = document.getElementById('dynamic-list'); 
+            const exercisesList = document.getElementById('dynamic-exercise-list'); 
+            
+            if (snap.metadata.hasPendingWrites === false && snap.empty) {
+                lessonsList.innerHTML = "<p style='color:#777;'>No lessons available right now.</p>";
+                exercisesList.innerHTML = "<p style='color:#777;'>No practical exercises available right now.</p>";
+                return;
+            }
+
+            if (!snap.empty) {
+                lessonsList.innerHTML = "";
+                exercisesList.innerHTML = "";
+
+                const sortedLessons = snap.docs.sort((a, b) => {
+                    const timeA = a.data().createdAt ? a.data().createdAt.toMillis() : 0;
+                    const timeB = b.data().createdAt ? b.data().createdAt.toMillis() : 0;
+                    return timeA - timeB;
+                });
+
+                sortedLessons.forEach(dDoc => {
+                    const d = dDoc.data();
+                    const locked = d.accessType === "paid" && plan === "free";
+                    
+                    // Lessons విభాగం
+                    lessonsList.insertAdjacentHTML('beforeend', `
+                        <div class="lesson-card">
+                            <div class="lesson-info">
+                                <h3>${locked ? "🔒" : "📖"} ${d.topicTitle}</h3>
+                                <p>${d.mainCategory || 'English Grammar • Core Notes'}</p>
+                            </div>
+                            <a href="#" class="start-btn" onclick="checkAccess(${locked}, 'lesson-view.html?id=${dDoc.id}&mode=lesson')">Start</a>
+                        </div>`);
+
+                    // 💡 Exercises విభాగం: అడ్మిన్ ద్వారా పంపిన 'ex1' ఫీల్డ్‌లో క్విజ్ ఉంటే ఇక్కడ ఆటోమేటిక్‌గా వస్తుంది
+                    if (d.ex1 && d.ex1.length > 0) {
+                        exercisesList.insertAdjacentHTML('beforeend', `
+                            <div class="lesson-card" style="border-left: 5px solid var(--primary-blue);">
+                                <div class="lesson-info">
+                                    <h3>📝 Practice Exercise: ${d.topicTitle}</h3>
+                                    <p>Interactive MCQ Quiz • Solve to earn progress points</p>
+                                </div>
+                                <a href="#" class="start-btn" style="background: var(--primary-blue);" onclick="checkAccess(${locked}, 'lesson-view.html?id=${dDoc.id}&mode=quiz')">Solve</a>
+                            </div>`);
+                    }
+                });
+
+                if(exercisesList.innerHTML === "") {
+                    exercisesList.innerHTML = "<p style='color:#777;'>No exercises updated for current topics yet.</p>";
+                }
+            }
+        });
+
+        // 2. Load Public Articles
+        onSnapshot(collection(db, "public_posts"), (snap) => {
+            const artList = document.getElementById('articles-list'); 
+            
+            if (snap.metadata.hasPendingWrites === false && snap.empty) { 
+                artList.innerHTML = "<p style='color:#777;'>ప్రస్తుతానికి ఎలాంటి ఆర్టికల్స్ లేవు.</p>"; 
+                return;
+            }
+
+            if (!snap.empty) {
+                artList.innerHTML = "";
+                const sortedArticles = snap.docs.sort((a, b) => {
+                    const timeA = a.data().timestamp ? a.data().timestamp.toMillis() : 0;
+                    const timeB = b.data().timestamp ? b.data().timestamp.toMillis() : 0;
+                    return timeB - timeA;
+                });
+
+                sortedArticles.forEach(dDoc => {
+                    const d = dDoc.data();
+                    if (d.category === "Job Alert") {
+                        const articleSlug = d.slug ? d.slug : d.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
+                        const targetLink = `view-post.html?id=${dDoc.id}&topic=${articleSlug}`;
+
+                        artList.insertAdjacentHTML('beforeend', `
+                            <div class="lesson-card" style="border-left: 5px solid var(--orange);">
+                                <div class="lesson-info">
+                                    <h3>📰 ${d.title}</h3>
+                                    <p>${d.category || 'General Article'}</p>
+                                </div>
+                                <a href="${targetLink}" class="start-btn" style="background:var(--orange);">Read</a>
+                            </div>`);
+                    }
+                });
+            }
+        });
+
+        // 3. Load Mock Tests
+        onSnapshot(collection(db, "mockTests"), (snap) => {
+            const list = document.getElementById('mock-list'); 
+            
+            if (snap.metadata.hasPendingWrites === false && snap.empty) {
+                list.innerHTML = "<p style='color:#777;'>No mock tests available right now.</p>";
+                return;
+            }
+
+            if (!snap.empty) {
+                list.innerHTML = "";
+                snap.forEach(dDoc => {
+                    const d = dDoc.data();
+                    const locked = d.accessType === "paid" && plan === "free";
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="lesson-card" style="border-left: 5px solid #ffa500;">
+                            <div class="lesson-info">
+                                <h3>📝 ${d.testName} ${locked ? "🔒" : ""}</h3>
+                                <p>Mock Test • 30 Questions</p>
+                            </div>
+                            <a href="#" class="start-btn" style="background:#ffa500;" onclick="checkAccess(${locked}, 'mock-test.html?id=${dDoc.id}')">Take Test</a>
+                        </div>`);
+                });
+            }
+        });
+    }
+
+    window.checkAccess = (locked, url) => { 
+        if(locked) { alert("Upgrade to Premium to unlock this! 💰"); window.location.href="purchase.html"; }
+        else window.location.href = url;
+    };
+</script>
+</body>
+</html>

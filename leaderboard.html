@@ -1,0 +1,135 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Leaderboard</title>
+	 <link rel="icon" type="image/png" href="logo.png">
+	   <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --gold: #FFD700;
+            --silver: #C0C0C0;
+            --bronze: #CD7F32;
+            --dark: #333;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; color: var(--dark); }
+        
+        .header { background: linear-gradient(135deg, #1e1e1e, #444); color: white; padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--gold); }
+        .header h1 { margin: 0; font-size: 28px; letter-spacing: 1px; }
+
+        /* Podium Styles */
+        .podium { display: flex; justify-content: center; align-items: flex-end; gap: 15px; margin: 40px auto; max-width: 600px; padding: 0 10px; min-height: 250px; }
+        .winner-card { background: white; border-radius: 15px; padding: 20px 10px; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.1); flex: 1; transition: 0.3s; display: none; }
+        
+        .rank-1 { height: 230px; border: 3px solid var(--gold); order: 2; display: block; }
+        .rank-2 { height: 190px; border: 3px solid var(--silver); order: 1; display: block; }
+        .rank-3 { height: 170px; border: 3px solid var(--bronze); order: 3; display: block; }
+
+        .medal-icon { font-size: 45px; display: block; margin-bottom: 5px; }
+        .winner-name { font-weight: bold; font-size: 16px; display: block; margin: 5px 0; overflow: hidden; text-overflow: ellipsis; }
+        .winner-score { color: #FFA500; font-weight: 800; font-size: 18px; display: block; }
+
+        /* Table Styles */
+        .ranking-table { max-width: 700px; margin: 20px auto; background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .table-header { background: #eee; display: flex; padding: 15px 20px; font-weight: bold; color: #555; text-transform: uppercase; font-size: 13px; }
+        .table-row { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid #f0f0f0; }
+        .col-rank { width: 50px; font-weight: bold; color: #888; }
+        .col-name { flex: 1; font-weight: 600; }
+        .col-score { width: 100px; text-align: right; font-weight: bold; }
+
+        .btn-back { display: inline-block; margin: 30px 0; padding: 12px 30px; background: var(--dark); color: white; text-decoration: none; border-radius: 50px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Weekly Grand Test Leaderboard 🏆</h1>
+        <p>Real-time Rankings from the Treasure Hunt</p>
+    </div>
+
+    <div class="podium" id="podium-area">
+        <div class="winner-card rank-2" id="card-rank-2">
+            <span class="medal-icon">🥈</span>
+            <span class="winner-name" id="name-rank-2">---</span>
+            <span class="winner-score" id="score-rank-2">0%</span>
+        </div>
+        <div class="winner-card rank-1" id="card-rank-1">
+            <span class="medal-icon">🥇</span>
+            <span class="winner-name" id="name-rank-1">---</span>
+            <span class="winner-score" id="score-rank-1">0%</span>
+        </div>
+        <div class="winner-card rank-3" id="card-rank-3">
+            <span class="medal-icon">🥉</span>
+            <span class="winner-name" id="name-rank-3">---</span>
+            <span class="winner-score" id="score-rank-3">0%</span>
+        </div>
+    </div>
+
+    <div class="ranking-table">
+        <div class="table-header">
+            <div class="col-rank">Rank</div>
+            <div class="col-name">Student Name</div>
+            <div class="col-score">Score</div>
+        </div>
+        <div id="remaining-ranks">
+            </div>
+    </div>
+
+    <div style="text-align: center;">
+        <a href="user-home.html" class="btn-back">← Back to Dashboard</a>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, query, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCppICsitxIJBSTV90DzYYS4oYv078QSiA",
+            authDomain: "preptreasure.firebaseapp.com",
+            projectId: "preptreasure",
+            storageBucket: "preptreasure.firebasestorage.app",
+            messagingSenderId: "354456239925",
+            appId: "1:354456239925:web:814dd0bab357de6699d67c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // Fetch Top 20 Scores from 'testResults' collection
+        const leaderboardQuery = query(
+            collection(db, "testResults"), 
+            orderBy("score", "desc"), 
+            limit(20)
+        );
+
+        onSnapshot(leaderboardQuery, (snapshot) => {
+            const tableArea = document.getElementById('remaining-ranks');
+            tableArea.innerHTML = "";
+            let rank = 1;
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const percentage = Math.round((data.score / data.total) * 100) + "%";
+
+                if (rank <= 3) {
+                    // Update Podium
+                    document.getElementById(`name-rank-${rank}`).innerText = data.studentName;
+                    document.getElementById(`score-rank-${rank}`).innerText = percentage;
+                } else {
+                    // Update Table for Rank 4+
+                    const rowHtml = `
+                        <div class="table-row">
+                            <div class="col-rank">${rank}</div>
+                            <div class="col-name">${data.studentName}</div>
+                            <div class="col-score">${percentage}</div>
+                        </div>`;
+                    tableArea.insertAdjacentHTML('beforeend', rowHtml);
+                }
+                rank++;
+            });
+        });
+    </script>
+</body>
+</html>

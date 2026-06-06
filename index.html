@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Master English Grammar & Job Updates</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+
+    <style>
+        :root { --gold: #FFD700; --orange: #FFA500; --dark: #1a1a1a; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: #f9f9f9; color: #333; }
+        .navbar { background: #fff; padding: 10px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .logo img { height: 45px; }
+        .nav-btns a { text-decoration: none; margin-left: 10px; font-weight: 600; font-size: 14px; }
+        .btn-login { color: var(--dark); padding: 8px 18px; border: 2px solid var(--dark); border-radius: 8px; transition: 0.3s; }
+        .btn-login:hover { background: var(--dark); color: var(--gold); }
+        .btn-signup { background: var(--dark); color: var(--gold); padding: 10px 22px; border-radius: 8px; border: 2px solid var(--dark); }
+        .hero { background: linear-gradient(135deg, var(--gold), var(--orange)); padding: 60px 20px; text-align: center; color: white; }
+        .content-section { max-width: 1100px; margin: 30px auto; padding: 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        .article-card { background: #fff; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 6px solid var(--orange); }
+        .sidebar { background: #fff; padding: 25px; border-radius: 12px; height: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: sticky; top: 90px; }
+        footer { background: var(--dark); color: white; padding: 40px 20px; text-align: center; margin-top: 50px; }
+        footer a { color: var(--gold); text-decoration: none; margin: 0 10px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo"><img src="logo.jpg" alt="PrepTreasure"></div>
+        <div class="nav-btns">
+            <a href="login.html" class="btn-login">Login</a>
+            <a href="signup.html" class="btn-signup">Join Now 🚀</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <h1>Unlock Your Career Treasures 🛡️</h1>
+        <p>Expert English Grammar Lessons & Latest Job Notifications.</p>
+    </header>
+
+    <main class="content-section">
+        <div id="articles-feed">
+            <h2 style="margin-bottom: 25px;">📰 Latest Updates</h2>
+            <div id="public-posts">
+                <p>Loading updates from bundle...</p>
+            </div>
+        </div>
+
+        <aside class="sidebar">
+            <h3>📌 Quick Links</h3>
+            <ul>
+                <li><a href="signup.html">👉 Free Mock Tests</a></li>
+                <li><a href="signup.html">👉 Grammar Notes</a></li>
+            </ul>
+        </aside>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        // Important: Notice we import from firebase-firestore-bundle.js
+        import { getFirestore, loadBundle, getNamedQuery } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-bundle.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+            authDomain: "preptreasure.firebaseapp.com",
+            projectId: "preptreasure",
+            storageBucket: "preptreasure.firebasestorage.app",
+            messagingSenderId: "354456239925",
+            appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadArticlesFromBundle() {
+            const container = document.getElementById('public-posts');
+            
+            try {
+                // 1. Download the static data.bundle file
+                const response = await fetch('data.bundle');
+                const bundleData = await response.arrayBuffer();
+
+                // 2. Load the bundle into Firestore
+                await loadBundle(db, bundleData);
+
+                // 3. Get the query we saved in the bundle
+                const querySnapshot = await getNamedQuery(db, 'latest-posts');
+
+                if (querySnapshot.empty) {
+                    container.innerHTML = "<p>No updates available.</p>";
+                    return;
+                }
+
+                container.innerHTML = ""; 
+                querySnapshot.forEach((doc) => {
+                    const post = doc.data();
+                    const targetLink = `view-post.html?id=${doc.id}`;
+                    
+                    const tempDiv = document.createElement("div");
+                    tempDiv.innerHTML = post.content || "";
+                    const preview = (tempDiv.textContent || "").substring(0, 150) + "...";
+
+                    container.innerHTML += `
+                        <div class="article-card">
+                            <small style="color:var(--orange); font-weight:bold;">${post.category || 'Update'}</small>
+                            <h3>${post.title}</h3>
+                            <p>${preview}</p>
+                            <a href="${targetLink}" style="color:var(--orange); font-weight:bold; text-decoration:none;">Read Full Article →</a>
+                        </div>
+                    `;
+                });
+            } catch (error) {
+                console.error("Bundle Error:", error);
+                container.innerHTML = "<p>Error loading updates. Please make sure data.bundle exists.</p>";
+            }
+        }
+
+        loadArticlesFromBundle();
+    </script>
+</body>
+</html>

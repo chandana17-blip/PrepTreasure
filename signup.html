@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup - PrepTreasure</title>
+    <link rel="icon" type="image/png" href="logo.jpg">
+	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root { --gold: #FFD700; --dark: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--gold); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .auth-card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-auth { background: var(--dark); color: var(--gold); width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+    <h2>Student Signup 🛡️</h2>
+    
+    <div id="phone-section">
+        <input type="text" id="reg-name" placeholder="Full Name">
+        <input type="text" id="reg-phone" placeholder="Phone Number (e.g. 9876543210)">
+        <input type="password" id="reg-pass" placeholder="Create Password">
+        
+        <button class="btn-auth" id="signup-btn">Create Account 🚀</button>
+    </div>
+
+    <p style="font-size:13px; margin-top:15px;">Already a member? <a href="login.html" style="color:#333; font-weight:bold;">Login</a></p>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    document.getElementById('signup-btn').onclick = async () => {
+        const phone = document.getElementById('reg-phone').value.trim();
+        const name = document.getElementById('reg-name').value.trim();
+        const pass = document.getElementById('reg-pass').value.trim();
+
+        // Basic validation
+        if(!name || phone.length < 10 || !pass) {
+            return alert("దయచేసి అన్ని వివరాలు (కనీసం 10 అంకెల ఫోన్ నంబర్) నింపండి.");
+        }
+
+        try {
+            // Check if user already exists
+            const userRef = doc(db, "users", phone);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists()) {
+                return alert("ఈ నంబర్ తో అప్పటికే అకౌంట్ ఉంది. దయచేసి లాగిన్ అవ్వండి.");
+            }
+
+            // Save user directly to Firestore
+            await setDoc(userRef, {
+                name: name,
+                phone: phone,
+                password: pass,
+                role: "student",
+                plan: "free",
+                createdAt: serverTimestamp()
+            });
+
+            localStorage.setItem("user_name", name);
+            localStorage.setItem("user_phone", phone);
+            localStorage.setItem("user_plan", "free");
+
+            alert("రిజిస్ట్రేషన్ విజయవంతమైంది! 🎉");
+            window.location.href = "user-home.html";
+
+        } catch (error) {
+            console.error("Signup Error:", error);
+            alert("సాంకేతిక సమస్య: " + error.message);
+        }
+    };
+</script>
+</body>
+</html>

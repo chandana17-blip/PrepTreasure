@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Purchases - PrepTreasure</title>
+    <link rel="icon" type="image/png" href="logo.jpg">
+	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8f9fa; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-home { text-decoration: none; color: #333; font-weight: bold; font-size: 14px; border: 1px solid #333; padding: 5px 15px; border-radius: 5px; }
+        
+        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h2 { color: #333; font-size: 20px; border-bottom: 2px solid #FFD700; padding-bottom: 10px; margin-top: 0; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+        th { color: #888; font-weight: normal; }
+        .status { padding: 4px 8px; border-radius: 5px; font-size: 12px; font-weight: bold; }
+        .success { background: #d4edda; color: #155724; }
+
+        .support-box { background: #333; color: white; padding: 20px; border-radius: 15px; text-align: center; }
+        .support-btn { display: inline-block; margin-top: 10px; background: #FFD700; color: #333; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>💳 My Purchases</h1>
+            <a href="user-home.html" class="back-home">🏠 Home</a>
+        </div>
+
+        <div class="card">
+            <h2>Current Plan</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h3 style="margin: 0; color: #FFA500;" id="plan-name">Free Explorer</h3>
+                    <p style="color: #666; font-size: 14px;" id="expiry-date">No active subscription</p>
+                </div>
+                <div style="font-size: 24px;" id="lock-status">🔒</div>
+            </div>
+        </div>
+
+        <div class="card" style="overflow-x: auto;">
+            <h2>Transaction History</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Plan</th>
+                        <th>Payment ID</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="txn-body">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="support-box">
+            <h3>Need Help with Payment?</h3>
+            <p>If your payment was deducted but the course is not active, please contact us.</p>
+            <a href="https://wa.me/916304555205" class="support-btn" target="_blank">WhatsApp Support 💬</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // మీ వర్కింగ్ API Key తో కూడిన Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+            authDomain: "preptreasure.firebaseapp.com",
+            projectId: "preptreasure",
+            storageBucket: "preptreasure.firebasestorage.app",
+            messagingSenderId: "354456239925",
+            appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadPurchases() {
+            const userPhone = localStorage.getItem("user_phone");
+            if (!userPhone) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            try {
+                const userRef = doc(db, "users", userPhone);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    const data = userSnap.data();
+                    const tbody = document.getElementById('txn-body');
+                    
+                    if (data.isPaid) {
+                        // 1. అప్డేట్ ప్లాన్ కార్డ్
+                        document.getElementById('plan-name').innerText = (data.plan || "Free").toUpperCase() + " TREASURE";
+                        document.getElementById('lock-status').innerText = "🔓";
+                        
+                        if (data.expiryDate) {
+                            const date = data.expiryDate.toDate();
+                            document.getElementById('expiry-date').innerText = "Valid until: " + date.toLocaleDateString('en-GB');
+                        }
+
+                        // 2. అప్డేట్ ట్రాన్సాక్షన్ టేబుల్
+                        const pDate = data.updatedAt ? data.updatedAt.toDate().toLocaleDateString('en-GB') : "Recently";
+                        
+                        tbody.innerHTML = `
+                            <tr>
+                                <td>${pDate}</td>
+                                <td>${(data.plan || "N/A").toUpperCase()}</td>
+                                <td style="font-family: monospace; font-size: 12px;">${data.paymentId || 'N/A'}</td>
+                                <td><span class="status success">Success</span></td>
+                            </tr>
+                        `;
+                    } else {
+                        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center;'>No transactions found</td></tr>";
+                    }
+                }
+            } catch (error) {
+                console.error("Error loading purchases:", error);
+            }
+        }
+
+        loadPurchases();
+    </script>
+</body>
+</html>

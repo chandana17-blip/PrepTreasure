@@ -1,0 +1,139 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Hunt Challenge - PrepTreasure</title>
+	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root { --gold: #FFD700; --dark: #1a1a1a; --orange: #FFA500; --green: #27ae60; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; text-align: center; padding-bottom: 50px; }
+        .game-header { background: var(--dark); color: var(--gold); padding: 25px; border-bottom: 5px solid var(--orange); }
+        .level-card { background: white; margin: 15px auto; width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .grid-container { 
+            display: grid; grid-template-columns: repeat(7, 42px); gap: 6px; 
+            justify-content: center; margin: 20px auto; background: #fff; padding: 15px;
+            border-radius: 15px; width: fit-content; border: 3px solid var(--dark);
+        }
+        .grid-item { 
+            width: 42px; height: 42px; background: #fff; border: 1px solid #ddd; 
+            display: flex; align-items: center; justify-content: center; 
+            font-weight: bold; font-size: 18px; border-radius: 8px; text-transform: uppercase;
+        }
+        .word-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px auto; width: 90%; }
+        .word-item { padding: 8px 15px; background: #eee; border: 1px solid #ccc; border-radius: 20px; font-size: 13px; font-weight: 600; color: #888; }
+        .word-item.found { background: var(--green); color: white; border-color: var(--green); text-decoration: none; transform: scale(1.05); }
+        .input-zone { margin-top: 25px; }
+        #word-input { padding: 15px; width: 60%; border-radius: 10px; border: 2px solid #ddd; font-size: 16px; outline: none; }
+        .btn-check { padding: 15px 25px; background: var(--dark); color: var(--gold); border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="game-header">
+    <h1>WORD HUNT 🎮</h1>
+    <div id="hint-text">💡 Hint: Loading...</div>
+</div>
+
+<div class="level-card">
+    <div id="level-display" style="font-size:20px; font-weight:bold;">Level --</div>
+    <div id="words-count-msg" style="font-size:13px; color:var(--orange); margin-top:5px;"></div>
+</div>
+
+<div class="grid-container" id="grid"></div>
+
+<p style="font-weight:bold; color:#555;">Found Words:</p>
+<div class="word-list" id="words-to-find"></div>
+
+<div class="input-zone">
+    <input type="text" id="word-input" placeholder="Type hidden word here..." autocomplete="off">
+    <button class="btn-check" onclick="verifyWord()">CHECK</button>
+</div>
+
+<a href="user-home.html" style="display:block; margin-top:30px; color:#888; text-decoration:none;">⬅ Exit Game</a>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const phone = localStorage.getItem("user_phone");
+    const userPlan = localStorage.getItem("user_plan") || "free";
+    let currentLevel = 1;
+    let levelData = null;
+    let foundWords = [];
+
+    async function initGame() {
+        const userSnap = await getDoc(doc(db, "users", phone));
+        currentLevel = userSnap.data().gameLevel || 1;
+
+        const levelSnap = await getDoc(doc(db, "game_levels", `level_${currentLevel}`));
+        if (levelSnap.exists()) {
+            levelData = levelSnap.data();
+            
+            if (currentLevel > 10 && levelData.accessType === "paid" && userPlan === "free") {
+                document.body.innerHTML = `<div style="padding:100px 20px;"><h2>🔒 Premium Level</h2><p>Upgrade to unlock Level ${currentLevel}</p><br><a href="purchase.html">BUY PLAN</a></div>`;
+                return;
+            }
+            renderGame();
+        } else {
+            alert("More levels coming soon! 🏆");
+        }
+    }
+
+    function renderGame() {
+        document.getElementById('level-display').innerText = `Level ${currentLevel}`;
+        document.getElementById('hint-text').innerText = `💡 ${levelData.hint}`;
+        document.getElementById('words-count-msg').innerText = `Target: Find ${levelData.target_words.length} hidden words!`;
+
+        const gridBox = document.getElementById('grid');
+        gridBox.innerHTML = "";
+        levelData.grid.forEach(letter => { gridBox.innerHTML += `<div class="grid-item">${letter}</div>`; });
+
+        // Hidden word markers
+        const wordBox = document.getElementById('words-to-find');
+        wordBox.innerHTML = "";
+        levelData.target_words.forEach((word, index) => {
+            wordBox.innerHTML += `<span class="word-item" id="w-${word.toUpperCase()}">? ? ?</span>`;
+        });
+    }
+
+    window.verifyWord = async () => {
+        const inputField = document.getElementById('word-input');
+        const input = inputField.value.toUpperCase().trim();
+        
+        if (levelData.target_words.map(w => w.toUpperCase()).includes(input)) {
+            if (!foundWords.includes(input)) {
+                foundWords.push(input);
+                
+                // Reveal the found word
+                const wordElement = document.getElementById(`w-${input}`);
+                wordElement.innerText = "✅ " + input;
+                wordElement.classList.add('found');
+                
+                inputField.value = "";
+
+                if (foundWords.length === levelData.target_words.length) {
+                    alert("🎉 All Words Found! Well Done.");
+                    await updateDoc(doc(db, "users", phone), { gameLevel: currentLevel + 1 });
+                    location.reload();
+                }
+            } else { alert("Already found!"); }
+        } else { alert("❌ Not a hidden word. Try again!"); }
+    };
+    initGame();
+</script>
+</body>
+</html>

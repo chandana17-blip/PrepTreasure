@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Latest Updates - PrepTreasure</title>
+    <link type="image/png" href="logo.png" rel="icon">
+    <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root { --gold: #FFD700; --orange: #FFA500; --dark: #1a1a1a; --gray: #f4f4f4; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--gray); margin: 0; padding: 0; }
+        
+        /* Header */
+        .header { background: #fff; padding: 15px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 100; }
+        .header img { height: 35px; }
+        .back-home { text-decoration: none; color: var(--dark); font-weight: bold; font-size: 14px; }
+
+        .container { max-width: 800px; margin: 20px auto; padding: 15px; }
+        .section-title { border-left: 5px solid var(--orange); padding-left: 15px; margin-bottom: 25px; }
+
+        /* Article Card Design */
+        .article-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-decoration: none; display: block; border: 1px solid transparent; transition: 0.3s; }
+        .article-card:hover { border-color: var(--orange); transform: translateY(-3px); }
+        .category { background: #fff3e0; color: var(--orange); padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .article-card h3 { margin: 10px 0; color: #333; font-size: 18px; }
+        .article-card p { color: #666; font-size: 14px; margin: 0; line-height: 1.6; }
+        
+        .no-data { text-align: center; padding: 50px; color: #666; font-weight: 500; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <img src="logo.jpg" alt="PrepTreasure">
+        <a href="user-home.html" class="back-home">🏠 Home</a>
+    </div>
+
+    <div class="container">
+        <div class="section-title">
+            <h1 style="margin:0;">Latest Updates</h1>
+            <p style="color:#666; margin:5px 0 0;">Stay updated with job alerts and grammar tips.</p>
+        </div>
+
+        <div id="all-articles-list">
+            <div class="no-data">🔄 Connecting to PrepTreasure database... Loading latest updates, please wait.</div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // రియల్-టైమ్ సూపర్ ఫాస్ట్ లోడింగ్ ఫంక్షన్
+    function fetchArticlesFast() {
+        const list = document.getElementById('all-articles-list');
+        
+        onSnapshot(collection(db, "public_posts"), (snap) => {
+            
+            // 🔥 సర్వర్ ని పక్కాగా వెరిఫై చేసాకే.. ఒకవేళ నిజంగా డేటా లేకపోతేనే 'No updates' చూపిస్తుంది
+            if (snap.metadata.hasPendingWrites === false && snap.empty) {
+                list.innerHTML = "<div class='no-data'>No updates available yet. Check back soon!</div>";
+                return;
+            }
+
+            if (!snap.empty) {
+                list.innerHTML = "";
+                
+                // జావాస్క్రిప్ట్ క్лయింట్-సైడ్ ద్వారానే కొత్త ఆర్టికల్స్ పైకి వచ్చేలా అమరిక
+                const sortedDocs = snap.docs.sort((a, b) => {
+                    const timeA = a.data().timestamp ? a.data().timestamp.toMillis() : 0;
+                    const timeB = b.data().timestamp ? b.data().timestamp.toMillis() : 0;
+                    return timeB - timeA;
+                });
+
+                sortedDocs.forEach(docSnap => {
+                    const post = docSnap.data();
+                    
+                    const articleSlug = post.slug ? post.slug : post.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
+                    const targetLink = `view-post.html?id=${docSnap.id}&topic=${articleSlug}`;
+
+                    const cleanText = post.content ? post.content.replace(/<\/?[^>]+(>|$)/g, "") : "";
+                    const shortDesc = cleanText.substring(0, 150);
+
+                    list.innerHTML += `
+                        <a href="${targetLink}" class="article-card">
+                            <span class="category">${post.category || 'Update'}</span>
+                            <h3>${post.title}</h3>
+                            <p>${shortDesc}...</p>
+                            <div style="text-align:right; color:var(--orange); font-weight:bold; margin-top:10px; font-size:13px;">Read Full Update →</div>
+                        </a>`;
+                });
+            }
+        }, (error) => {
+            console.error("Error loading updates:", error);
+            list.innerHTML = "<div class='no-data'>Failed to load data. Please refresh the page!</div>";
+        });
+    }
+
+    fetchArticlesFast();
+</script>
+</body>
+</html>

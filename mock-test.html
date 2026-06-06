@@ -1,0 +1,268 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Weekly Mock Test</title>
+    <link rel="icon" type="image/png" href="logo.png">
+	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root { --gold: #FFD700; --dark: #1a1a1a; --success: #28a745; --danger: #dc3545; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        .test-container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative; min-height: 200px; }
+        
+        .timer-box { position: sticky; top: 10px; background: var(--dark); color: var(--gold); padding: 10px 20px; border-radius: 50px; display: inline-block; font-weight: bold; font-size: 18px; margin-bottom: 20px; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        
+        .q-card { margin-bottom: 30px; padding: 20px; border-bottom: 1px solid #eee; }
+        .q-text { font-size: 20px; font-weight: bold; margin-bottom: 15px; }
+        .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .opt-btn { padding: 15px; border: 2px solid #ddd; border-radius: 10px; background: white; cursor: pointer; text-align: left; font-size: 16px; transition: 0.3s; }
+        .opt-btn:hover { border-color: var(--gold); }
+        .opt-btn.selected { background: var(--gold); border-color: var(--dark); color: var(--dark); font-weight: bold; }
+
+        #result-screen { display: none; text-align: center; padding: 20px; }
+        .score-card { background: #fff; padding: 30px; border-radius: 15px; border: 2px solid var(--gold); margin-bottom: 20px; }
+        
+        #analysis-section { display: none; text-align: left; margin-top: 30px; }
+        .review-card { padding: 20px; margin-bottom: 15px; border-radius: 12px; border-left: 6px solid #ddd; background: #fafafa; }
+        .explanation { color: #555; font-size: 14px; margin-top: 10px; background: #e3f2fd; padding: 12px; border-radius: 8px; border-left: 4px solid #2196f3; }
+        .correct-text { color: var(--success); font-weight: bold; }
+        .wrong-text { color: var(--danger); font-weight: bold; }
+
+        .btn-action { padding: 15px 25px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; margin: 5px; }
+        .btn-analysis { background: var(--dark); color: var(--gold); }
+        .btn-retry { background: var(--gold); color: var(--dark); }
+
+        .lock-screen { text-align: center; padding: 50px 20px; }
+    </style>
+</head>
+<body>
+
+<div class="test-container" id="main-test-wrapper">
+    <div id="test-header" style="display:none;">
+        <div class="timer-box">⏱️ Time Left: <span id="time-display">15:00</span></div>
+        <h1 id="test-title">Loading Grand Test...</h1>
+    </div>
+
+    <div id="quiz-area">
+        <h2 style="text-align:center;">Verifying Access... Please Wait 🛡️</h2>
+    </div>
+
+    <button id="submit-btn" style="width:100%; padding:20px; background:var(--dark); color:var(--gold); border:none; border-radius:10px; font-size:18px; font-weight:bold; cursor:pointer; margin-top:30px; display:none;">Finish & Submit Test 🚀</button>
+
+    <div id="result-screen">
+        <div class="score-card">
+            <h1>Test Completed! 🏆</h1>
+            <h2 id="final-score" style="font-size: 50px; color: var(--success); margin: 10px 0;">0/0</h2>
+            <p id="leaderboard-msg" style="font-weight: bold; color: #666;"></p>
+        </div>
+
+        <div class="actions">
+            <button class="btn-action btn-analysis" id="toggle-analysis-btn" onclick="toggleAnalysis()">📝 View Analysis</button>
+            <button class="btn-action btn-retry" onclick="location.reload()">🔄 Re-attempt Test</button>
+        </div>
+
+        <div id="analysis-section">
+            <hr>
+            <h3 style="font-size: 24px; margin-bottom: 20px;">Detailed Analysis</h3>
+            <div id="review-list"></div>
+            <br>
+            <a href="user-home.html" style="text-decoration:none; color:blue; font-weight:bold; font-size: 18px;">← Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const testId = params.get("id");
+
+    let questionsData = [];
+    let userAnswers = {};
+    let timeLeft = 900; 
+    let timerInterval;
+
+    async function loadMockTest() {
+        const phone = localStorage.getItem("user_phone");
+
+        // 1. Login Check
+        if (!phone) {
+            alert("దయచేసి ముందు లాగిన్ అవ్వండి!");
+            window.location.href = "login.html";
+            return;
+        }
+
+        if(!testId) return alert("No Test ID found!");
+
+        try {
+            const testDoc = await getDoc(doc(db, "mockTests", testId));
+            const userSnap = await getDoc(doc(db, "users", phone));
+
+            if (testDoc.exists() && userSnap.exists()) {
+                const testData = testDoc.data();
+                const userData = userSnap.data();
+                
+                const userPlan = (userData.plan || "free").toLowerCase();
+                const testAccess = (testData.accessType || "paid").toLowerCase();
+
+                // 2. Access Check Logic
+                if (testAccess === "paid" && userPlan === "free") {
+                    document.getElementById('main-test-wrapper').innerHTML = `
+                        <div class="lock-screen">
+                            <h1>🔒 Premium Content</h1>
+                            <p>This Grand Mock Test is only for Premium Members.</p>
+                            <a href="purchase.html" style="display:inline-block; padding:15px 30px; background:var(--gold); color:black; text-decoration:none; border-radius:10px; font-weight:bold; margin-top:20px;">Unlock Treasure Now 💰</a>
+                            <br><br><a href="user-home.html">Back to Home</a>
+                        </div>`;
+                    return;
+                }
+
+                // 3. Time Lock Check
+                const now = new Date();
+                const currentHour = now.getHours();
+                if (currentHour < 11 || currentHour >= 24) {
+                    document.getElementById('main-test-wrapper').innerHTML = `
+                        <div class="lock-screen">
+                            <h1>🕒 Test is Locked!</h1>
+                            <p>Grand Mock Tests are live only between 11:00 AM and 12:00 AM.</p>
+                            <br><a href="user-home.html" style="color:blue; font-weight:bold;">← Back to Home</a>
+                        </div>`;
+                    return;
+                }
+
+                // 4. Load Data
+                document.getElementById('test-title').innerText = testData.testName;
+                questionsData = testData.questions; 
+                document.getElementById('test-header').style.display = "block";
+                document.getElementById('quiz-area').innerHTML = ""; // Clear "Verifying" message
+                renderQuestions();
+                startTimer();
+                document.getElementById('submit-btn').style.display = "block";
+
+            } else {
+                document.getElementById('quiz-area').innerHTML = "<h2>Data Not Found!</h2>";
+            }
+        } catch (e) {
+            console.error("Error:", e);
+            alert("Something went wrong!");
+        }
+    }
+
+    function renderQuestions() {
+        const area = document.getElementById('quiz-area');
+        area.innerHTML = "";
+        questionsData.forEach((q, index) => {
+            area.innerHTML += `
+                <div class="q-card">
+                    <div class="q-text">${index + 1}. ${q.q}</div>
+                    <div class="opt-grid">
+                        <button class="opt-btn q${index}" onclick="selectOption(${index}, 'A', this)">A. ${q.a}</button>
+                        <button class="opt-btn q${index}" onclick="selectOption(${index}, 'B', this)">B. ${q.b}</button>
+                        <button class="opt-btn q${index}" onclick="selectOption(${index}, 'C', this)">C. ${q.c}</button>
+                        <button class="opt-btn q${index}" onclick="selectOption(${index}, 'D', this)">D. ${q.d}</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    window.selectOption = (qIdx, choice, btn) => {
+        userAnswers[qIdx] = choice;
+        document.querySelectorAll(`.q${qIdx}`).forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+    };
+
+    function startTimer() {
+        timerInterval = setInterval(() => {
+            let mins = Math.floor(timeLeft / 60);
+            let secs = timeLeft % 60;
+            document.getElementById('time-display').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            if (timeLeft <= 0) { clearInterval(timerInterval); autoSubmit(); }
+            timeLeft--;
+        }, 1000);
+    }
+
+    document.getElementById('submit-btn').onclick = () => {
+        if(confirm("Submit Test?")) autoSubmit();
+    };
+
+    async function autoSubmit() {
+        clearInterval(timerInterval);
+        let score = 0;
+        questionsData.forEach((q, i) => { if(userAnswers[i] === q.correct) score++; });
+
+        const phone = localStorage.getItem("user_phone") || "Unknown";
+        const name = localStorage.getItem("user_name") || "Student";
+
+        document.getElementById('quiz-area').style.display = "none";
+        document.getElementById('test-header').style.display = "none";
+        document.getElementById('submit-btn').style.display = "none";
+        document.getElementById('result-screen').style.display = "block";
+        document.getElementById('final-score').innerText = `${score} / ${questionsData.length}`;
+
+        try {
+            const qResult = query(collection(db, "testResults"), where("studentPhone", "==", phone), where("testId", "==", testId));
+            const snap = await getDocs(qResult);
+
+            if (snap.empty) {
+                await addDoc(collection(db, "testResults"), {
+                    studentName: name, studentPhone: phone, score: score, total: questionsData.length,
+                    testId: testId, testName: document.getElementById('test-title').innerText,
+                    timestamp: serverTimestamp()
+                });
+                document.getElementById('leaderboard-msg').innerText = "✅ First attempt saved to Leaderboard!";
+            } else {
+                document.getElementById('leaderboard-msg').innerText = "💡 Practice mode: Score not updated on Leaderboard.";
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    window.toggleAnalysis = () => {
+        const section = document.getElementById('analysis-section');
+        const btn = document.getElementById('toggle-analysis-btn');
+        if(section.style.display === "none") {
+            section.style.display = "block";
+            btn.innerText = "❌ Hide Analysis";
+            renderAnalysis();
+        } else {
+            section.style.display = "none";
+            btn.innerText = "📝 View Analysis";
+        }
+    };
+
+    function renderAnalysis() {
+        const reviewList = document.getElementById('review-list');
+        reviewList.innerHTML = "";
+        questionsData.forEach((q, i) => {
+            const uAns = userAnswers[i] || "Not Answered";
+            const isCorrect = uAns === q.correct;
+            reviewList.innerHTML += `
+                <div class="review-card" style="border-left-color: ${isCorrect ? 'var(--success)' : 'var(--danger)'}">
+                    <b>Q${i+1}: ${q.q}</b><br>
+                    <span class="${isCorrect ? 'correct-text' : 'wrong-text'}">
+                        ${isCorrect ? '✅ Correct' : '❌ Wrong'} | Your Answer: ${uAns} | Correct: ${q.correct}
+                    </span>
+                    <div class="explanation"><b>💡 Analysis:</b> ${q.explanation || 'No explanation provided.'}</div>
+                </div>`;
+        });
+    }
+
+    // ముఖ్యం: ఫంక్షన్ కాల్ చేయడం
+    loadMockTest();
+</script>
+</body>
+</html>

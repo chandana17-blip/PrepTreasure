@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Unlock Your Treasure</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root { --gold: #FFD700; --dark: #1a1a1a; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; text-align: center; }
+        .pricing-header { background: #333; color: white; padding: 50px 20px; }
+        .pricing-container { display: flex; justify-content: center; gap: 20px; padding: 50px; flex-wrap: wrap; }
+        
+        .card { 
+            background: white; border-radius: 15px; width: 280px; padding: 30px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1); transition: 0.3s; border: 2px solid transparent;
+        }
+        .card:hover { transform: translateY(-10px); }
+        .card.silver { border-color: #C0C0C0; }
+        .card.gold { border-color: #FFD700; background: #fffdf0; }
+        
+        .price { font-size: 32px; font-weight: bold; margin: 15px 0; color: #333; }
+        .offer-tag { color: #e74c3c; font-weight: bold; font-size: 14px; margin-bottom: 10px; height: 20px; }
+        
+        .features { list-style: none; padding: 0; text-align: left; margin-bottom: 30px; min-height: 180px; }
+        .features li { margin: 10px 0; color: #555; font-size: 14px; }
+        .features li::before { content: "✓ "; color: green; font-weight: bold; }
+
+        .buy-btn { 
+            display: block; width: 100%; padding: 12px; background: #333; 
+            color: white; text-decoration: none; border: none; border-radius: 8px; 
+            font-weight: bold; cursor: pointer; font-size: 16px;
+        }
+        .buy-btn.gold-bg { background: #FFD700; color: #333; }
+        .buy-btn:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div class="pricing-header">
+        <h1>Choose Your Learning Path 🛡️</h1>
+        <p>Unlock the secrets of English Grammar with our Treasure Plans.</p>
+    </div>
+
+    <div class="pricing-container">
+        <div class="card silver">
+            <h3>Starter Pack 🥈</h3>
+            <div class="offer-tag" id="count-msg">Checking offer...</div>
+            <div class="price" id="display-price">₹99</div>
+            <p style="font-size: 12px; color: #777;">Validity: 3 Months</p>
+            <ul class="features">
+                <li>Access to All Grammar Topics</li>
+                <li>Bronze & Silver Boxes</li>
+                <li>Daily Practice Quizzes</li>
+                <li>Ad-free Experience</li>
+            </ul>
+            <button class="buy-btn" id="btn-starter">Buy Starter Pack</button>
+        </div>
+
+        <div class="card">
+            <h3>Explorer Pack 🥉</h3>
+            <div class="offer-tag">Best for Exams</div>
+            <div class="price">₹239</div>
+            <p style="font-size: 12px; color: #777;">Validity: 6 Months</p>
+            <ul class="features">
+                <li>Everything in Starter</li>
+                <li>Weekly Grand Mock Tests</li>
+                <li>Global Leaderboard Entry</li>
+                <li>Performance Analytics</li>
+            </ul>
+            <button class="buy-btn" id="btn-explorer">Buy Explorer</button>
+        </div>
+
+        <div class="card gold">
+            <h3>Treasure Master 🥇</h3>
+            <div class="offer-tag">Premium Choice</div>
+            <div class="price">₹449</div>
+            <p style="font-size: 12px; color: #777;">Validity: 1 Year</p>
+            <ul class="features">
+                <li>Full Lifetime Access</li>
+                <li>All Treasure Boxes Unlocked</li>
+                <li>Completion Certificate</li>
+                <li>Priority Support</li>
+            </ul>
+            <button class="buy-btn gold-bg" id="btn-master">Buy Gold Master</button>
+        </div>
+    </div>
+
+    <a href="user-home.html" style="color: #666; text-decoration: none; display: block; margin-bottom: 50px;">← Back to Home</a>
+
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, query, where, onSnapshot, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let currentStarterPrice = 99;
+
+    // Real-time Early Bird Counter
+    onSnapshot(query(collection(db, "users"), where("isPaid", "==", true)), (snap) => {
+        const paidCount = snap.size;
+        const priceTag = document.getElementById('display-price');
+        const msgTag = document.getElementById('count-msg');
+
+        if (paidCount < 50) {
+            currentStarterPrice = 99;
+            priceTag.innerText = "₹99";
+            msgTag.innerText = `🔥 Early Bird: Only ${50 - paidCount} spots left!`;
+        } else {
+            currentStarterPrice = 129;
+            priceTag.innerText = "₹129";
+            msgTag.innerText = "Regular Price";
+        }
+    });
+
+    // Payment Logic
+    window.initiatePayment = (planName, amount, days) => {
+        // నంబర్ ని క్లీన్ చేయడం (ముందు +91 ఉన్నా లేకపోయినా ఒకేలా తీసుకోవడానికి)
+        let userPhone = localStorage.getItem("user_phone");
+        const userName = localStorage.getItem("user_name") || "Student";
+        
+        if (!userPhone) {
+            alert("దయచేసి ముందు లాగిన్ అవ్వండి!");
+            window.location.href = "login.html";
+            return;
+        }
+
+        // ఇక్కడ ప్లాన్ పేరును చిన్న అక్షరాలుగా మారుస్తున్నాం
+        const formattedPlan = planName.toLowerCase();
+
+        const options = {
+            "key": "rzp_live_SdkBYaJZJS3KFW", 
+            "amount": amount * 100, 
+            "currency": "INR",
+            "name": "PrepTreasure",
+            "description": planName + " Plan",
+            "image": "logo.jpg",
+            "handler": async function (response) {
+                try {
+                    const expiryDate = new Date();
+                    expiryDate.setDate(expiryDate.getDate() + days);
+
+                    // setDoc వాడుతున్నాం - డాక్యుమెంట్ లేకపోయినా క్రియేట్ అవుతుంది
+                    // merge: true వల్ల పాత డేటా (password, name) డిలీట్ అవ్వదు
+                    const userRef = doc(db, "users", userPhone);
+                    await setDoc(userRef, {
+                        plan: formattedPlan, // 'paid', 'starter' etc.
+                        isPaid: true,
+                        expiryDate: expiryDate,
+                        paymentId: response.razorpay_payment_id,
+                        lastUpdated: serverTimestamp()
+                    }, { merge: true });
+                    
+                    // LocalStorage అప్‌డేట్
+                    localStorage.setItem("user_plan", formattedPlan);
+                    localStorage.setItem("isPaid", "true");
+
+                    alert(`Success! Your ${planName} treasure is unlocked. 🔓`);
+                    window.location.href = "user-home.html";
+                } catch (e) {
+                    console.error("Database Error:", e);
+                    alert("Database Update Error: " + e.message);
+                }
+            },
+            "prefill": {
+                "name": userName,
+                "contact": userPhone
+            },
+            "theme": { "color": "#FFD700" }
+        };
+        const rzp = new Razorpay(options);
+        rzp.open();
+    };
+
+    // Button Click Listeners
+    document.getElementById('btn-starter').onclick = () => initiatePayment('Starter', currentStarterPrice, 99);
+    document.getElementById('btn-explorer').onclick = () => initiatePayment('Explorer', 239, 180);
+    document.getElementById('btn-master').onclick = () => initiatePayment('Master', 449, 365);
+
+</script>
+</body>
+</html>

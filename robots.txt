@@ -1,0 +1,11 @@
+﻿User-agent: *
+Allow: /
+
+# అడ్మిన్ మరియు కాన్ఫిడెన్షియల్ పేజీలను సెర్చ్ నుండి దాచడానికి
+Disallow: /admin.html
+Disallow: /dashboard.html
+Disallow: /login.html
+Disallow: /signup.html
+
+# మీ సైట్‌మ్యాప్ లింక్ (దీనివల్ల గూగుల్ కి మీ పేజీలు త్వరగా దొరుకుతాయి)
+Sitemap: https://preptreasure.online/sitemap.xml

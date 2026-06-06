@@ -1,0 +1,148 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Topics</title>
+    <link rel="icon" type="image/png" href="logo.jpg">
+	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: auto; }
+        h1 { text-align: center; color: #333; }
+
+        .content-header {
+            background: #333;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .topic-list { display: none; padding-left: 10px; margin-top: 10px; }
+        .topic-item {
+            background: #fff;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .topic-title {
+            padding: 12px;
+            background: #FFD700;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sub-topic-list { display: none; background: #fffdf0; }
+        .sub-item {
+            padding: 10px 25px;
+            border-top: 1px solid #eee;
+            cursor: pointer;
+            display: block;
+            text-decoration: none;
+            color: #555;
+            transition: 0.3s;
+        }
+        .sub-item:hover { background: #fff0b3; color: #000; padding-left: 35px; }
+
+        .arrow { transition: transform 0.3s; }
+        .active .arrow { transform: rotate(180deg); }
+        
+        /* Back Button */
+        .back-btn { display: inline-block; margin-bottom: 15px; text-decoration: none; color: #333; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="user-home.html" class="back-btn">⬅ Back to Dashboard</a>
+    <h1>Learn Grammar 📚</h1>
+
+    <div class="content-header" onclick="toggleSection('mainContent', this)">
+        Grammar Syllabus <span class="arrow">▼</span>
+    </div>
+
+    <div id="mainContent" class="topic-list">
+        <div class="topic-item">
+            <div class="topic-title" onclick="toggleSection('nounSub', this)">
+                Noun  <span class="arrow">▼</span>
+            </div>
+            <div id="nounSub" class="sub-topic-list">
+                <a href="noun-lesson.html" class="sub-item">📖 Proper Noun</a>
+                <a href="#" class="sub-item">📖 Common Noun</a>
+                <a href="#" class="sub-item">📖 Collective Noun</a>
+                <a href="quiz-view.html?id=noun_test_1" class="sub-item">📝 Noun Test - 1</a>
+            </div>
+        </div>
+
+        <div class="topic-item">
+            <div class="topic-title" onclick="toggleSection('pronounSub', this)">
+                Pronoun  <span class="arrow">▼</span>
+            </div>
+            <div id="pronounSub" class="sub-topic-list">
+                <a href="#" class="sub-item">📖 Personal Pronoun</a>
+                <a href="#" class="sub-item">📖 Reflexive Pronoun</a>
+                <a href="quiz-view.html?id=pronoun_test_1" class="sub-item">📝 Pronoun Test - 1</a>
+            </div>
+        </div>
+
+        <div class="topic-item">
+            <div class="topic-title" onclick="toggleSection('verbSub', this)">
+                Verb  <span class="arrow">▼</span>
+            </div>
+            <div id="verbSub" class="sub-topic-list">
+                <a href="#" class="sub-item">📖 Action Verbs</a>
+                <a href="#" class="sub-item">📖 Helping Verbs</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+
+    // మీ కొత్త కాన్ఫిగరేషన్
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+
+    // Login Check: యూజర్ లాగిన్ అవ్వకపోతే వెనక్కి పంపడం
+    const userPhone = localStorage.getItem("user_phone");
+    if (!userPhone) {
+        window.location.href = "login.html";
+    }
+</script>
+
+<script>
+    function toggleSection(id, element) {
+        let section = document.getElementById(id);
+        let isVisible = section.style.display === "block";
+
+        if (isVisible) {
+            section.style.display = "none";
+            element.classList.remove("active");
+        } else {
+            section.style.display = "block";
+            element.classList.add("active");
+        }
+    }
+</script>
+
+</body>
+</html>

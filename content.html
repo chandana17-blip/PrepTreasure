@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Lessons</title>
+	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .back-link { text-decoration: none; color: #333; font-weight: bold; display: inline-block; margin-bottom: 20px; }
+        
+        .topic-card { background: white; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow: hidden; border-left: 6px solid #FFD700; }
+        .topic-header { padding: 20px; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .topic-content { display: none; padding: 15px; background: #fffdf0; border-top: 1px solid #eee; }
+        
+        .btn-action { display: block; padding: 12px; margin: 8px 0; background: white; border: 1px solid #ddd; border-radius: 8px; text-decoration: none; color: #333; font-weight: 500; text-align: center; transition: 0.3s; }
+        .btn-action:hover { background: #333; color: #FFD700; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <a href="user-home.html" class="back-link">← Back to Dashboard</a>
+        <h2 style="text-align: center; color: #333;">📚 Your Learning Path</h2>
+        
+        <div id="dynamic-list">
+            <p style="text-align: center;">Opening the treasure chest... ⏳</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCppICsitxIJBSTV90DzYYS4oYv078QSiA",
+            authDomain: "preptreasure.firebaseapp.com",
+            projectId: "preptreasure",
+            storageBucket: "preptreasure.firebasestorage.app",
+            messagingSenderId: "354456239925",
+            appId: "1:354456239925:web:814dd0bab357de6699d67c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        onSnapshot(collection(db, "topics"), (snapshot) => {
+            const list = document.getElementById('dynamic-list');
+            list.innerHTML = "";
+
+            if (snapshot.empty) {
+                list.innerHTML = "<p style='text-align:center;'>No lessons found. Admin is preparing them! 🚀</p>";
+                return;
+            }
+
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const html = `
+                    <div class="topic-card">
+                        <div class="topic-header" onclick="toggleTopic(this)">
+                            <span>${data.mainCategory}: ${data.topicTitle}</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="topic-content">
+                            <a href="lesson-view.html?id=${doc.id}" class="btn-action">📖 Read Lesson</a>
+                            <a href="quiz-view.html?id=${doc.id}" class="btn-action" style="border-left: 5px solid #28a745;">✍️ Start Quiz</a>
+                        </div>
+                    </div>
+                `;
+                list.insertAdjacentHTML('beforeend', html);
+            });
+        });
+
+        // Global scope function for toggle
+        window.toggleTopic = (element) => {
+            const content = element.nextElementSibling;
+            content.style.display = (content.style.display === 'block') ? 'none' : 'block';
+        };
+    </script>
+</body>
+</html>

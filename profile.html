@@ -1,0 +1,222 @@
+﻿<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - My Profile</title>
+    <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root { --gold: #FFD700; --dark: #333; --green: #2f8d46; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; padding-bottom: 40px; }
+        
+        /* Profile Header */
+        .profile-header { 
+            background: linear-gradient(135deg, var(--dark), #555); 
+            width: 100%; 
+            padding: 50px 0; 
+            text-align: center; 
+            color: white;
+            border-bottom-left-radius: 50px;
+            border-bottom-right-radius: 50px;
+        }
+        
+        .profile-pic {
+            width: 100px;
+            height: 100px;
+            background: var(--gold);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            border: 4px solid white;
+            color: var(--dark);
+            font-weight: bold;
+        }
+
+        /* Stats Section */
+        .stats-container {
+            display: flex;
+            gap: 15px;
+            margin-top: -30px;
+            width: 90%;
+            max-width: 450px;
+        }
+        .stat-box {
+            background: white;
+            flex: 1;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .stat-box h3 { margin: 5px 0; color: #e67e22; font-size: 22px; }
+        .stat-box p { margin: 0; color: #666; font-size: 13px; font-weight: 500; }
+
+        /* Details Card */
+        .info-card {
+            background: white;
+            width: 90%;
+            max-width: 450px;
+            margin: 25px 0 15px 0;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+        .info-item:last-child { border-bottom: none; }
+        .label { font-weight: 600; color: #444; }
+        .value { color: #666; }
+
+        .badge {
+            background: var(--gold);
+            color: var(--dark);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 700;
+            padding: 10px 20px;
+            border: 2px solid var(--dark);
+            border-radius: 10px;
+            transition: 0.3s;
+            margin-top: 15px;
+        }
+        .back-btn:hover { background: var(--dark); color: var(--gold); }
+    </style>
+</head>
+<body>
+
+    <div class="profile-header">
+        <div class="profile-pic" id="profile-initial">👤</div>
+        <h2 id="disp-name" style="margin: 10px 0 5px 0;">Student Name</h2>
+        <p id="disp-phone" style="margin: 0; opacity: 0.8; font-size: 14px;">+91 0000000000</p>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <h3 id="completed-count-display">0</h3>
+            <p>Completed Exercises 📝</p>
+        </div>
+        <div class="stat-box">
+            <h3 id="rank-text">--</h3>
+            <p>Global Rank 🏆</p>
+        </div>
+    </div>
+
+    <div class="info-card" style="border-left: 5px solid var(--green); margin-top: 20px;">
+        <h4 style="margin: 0 0 10px 0; color: var(--dark);">Performance Analytics</h4>
+        <div class="info-item">
+            <span class="label">Performance Status</span>
+            <span class="value" id="user-performance-status" style="font-weight: bold; color: #e67e22;">Loading...</span>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-item">
+            <span class="label">Class</span>
+            <span class="value" id="disp-class">Not Set</span>
+        </div>
+        <div class="info-item">
+            <span class="label">Membership</span>
+            <span class="badge" id="membership-type">FREE</span>
+        </div>
+        <div class="info-item">
+            <span class="label">Account Status</span>
+            <span class="value" style="color: #27ae60; font-weight: bold;">Active ✅</span>
+        </div>
+    </div>
+
+    <a href="user-home.html" class="back-btn">← Back to Dashboard</a>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Fetching user identity from localStorage
+    const phone = localStorage.getItem("user_phone");
+    const fallbackName = localStorage.getItem("user_name") || "Student";
+
+    if (phone) {
+        // 🔥 Real-time database sync listener
+        onSnapshot(doc(db, "users", phone), (snap) => {
+            if (snap.exists()) {
+                const userData = snap.data();
+                
+                // Update profile identity details dynamically
+                const finalName = userData.name || fallbackName;
+                document.getElementById("disp-name").innerText = finalName;
+                document.getElementById("disp-phone").innerText = phone;
+                
+                if(document.getElementById("disp-class")) {
+                    document.getElementById("disp-class").innerText = userData.class || "Not Set";
+                }
+                
+                if(document.getElementById("membership-type")) {
+                    document.getElementById("membership-type").innerText = (userData.plan || "FREE").toUpperCase();
+                }
+
+                // Render dynamic avatar initials
+                if(finalName !== "Student") {
+                    document.getElementById("profile-initial").innerText = finalName.charAt(0).toUpperCase();
+                }
+
+                // Fetching progress array from completed_lessons
+                const completedList = userData.completed_lessons || [];
+                document.getElementById('completed-count-display').innerText = completedList.length;
+
+                // Performance status badges engine logic
+                const performanceDisplay = document.getElementById('user-performance-status');
+                if (performanceDisplay) {
+                    const totalCompleted = completedList.length;
+                    if (totalCompleted >= 10) {
+                        performanceDisplay.innerText = "Grammar Mastermind 🏆🔥";
+                        performanceDisplay.style.color = "#2f8d46";
+                    } else if (totalCompleted >= 5) {
+                        performanceDisplay.innerText = "Excellent Progress! 🌟";
+                        performanceDisplay.style.color = "#2f8d46";
+                    } else if (totalCompleted > 0) {
+                        performanceDisplay.innerText = "Good Start! Keep Learning 👍";
+                        performanceDisplay.style.color = "#e67e22";
+                    } else {
+                        performanceDisplay.innerText = "No exercises completed yet. 📚";
+                        performanceDisplay.style.color = "#c62828";
+                    }
+                }
+            }
+        }, (error) => {
+            console.error("Error connecting to user schema profile stream:", error);
+        });
+    } else {
+        alert("Session expired. Please log in again.");
+        window.location.href = "login.html";
+    }
+</script>
+
+</body>
+</html>

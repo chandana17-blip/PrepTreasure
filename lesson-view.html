@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reading Lesson - PrepTreasure</title>
+    <link rel="icon" type="image/png" href="logo.jpg">
+	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; line-height: 1.8; }
+        .container { max-width: 750px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: #d4af37; border-bottom: 3px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        
+        #l-content { 
+            font-size: 18px; 
+            color: #333; 
+            background: #fffdf0; 
+            padding: 25px; 
+            border-radius: 10px; 
+            border-left: 6px solid #FFD700;
+            overflow-wrap: break-word;
+        }
+        
+        #l-content h2, #l-content h3 { color: #1a1a1a; margin-top: 20px; }
+        #l-content b { color: #000; }
+        
+        .btn-finish { 
+            display: block; 
+            text-align: center; 
+            margin-top: 30px; 
+            padding: 15px; 
+            background: #27ae60; /* Green for Success */
+            color: white; 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            font-size: 16px;
+            transition: 0.3s; 
+        }
+        .btn-finish:hover { background: #219150; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="loading-overlay">⏳ Loading Lesson...</div>
+
+    <div class="container">
+        <h1 id="l-title">Loading...</h1>
+        <div id="l-content">Fetching your lesson from the treasure chest... ⏳</div>
+        
+        <button id="finishBtn" class="btn-finish" style="display:none;">✅ Done Reading! Save Progress</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, updateDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const params = new URLSearchParams(window.location.search);
+        const topicId = params.get("id");
+        const phone = localStorage.getItem("user_phone");
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+            authDomain: "preptreasure.firebaseapp.com",
+            projectId: "preptreasure",
+            storageBucket: "preptreasure.firebasestorage.app",
+            messagingSenderId: "354456239925",
+            appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadLesson() {
+            if(!topicId) {
+                document.getElementById('l-content').innerText = "No lesson ID found!";
+                return;
+            }
+
+            try {
+                const docSnap = await getDoc(doc(db, "topics", topicId));
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('l-title').innerText = data.topicTitle;
+                    // అడ్మిన్ లో మీరు lessonBody అనే ఫీల్డ్ వాడుతుంటే అది ఇక్కడ ఇవ్వండి
+                    document.getElementById('l-content').innerHTML = data.lessonBody || data.content; 
+                    
+                    document.getElementById('finishBtn').style.display = 'block';
+                } else {
+                    document.getElementById('l-content').innerText = "Lesson not found!";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+
+        // ప్రొగ్రెస్ సేవ్ చేసే లాజిక్
+        window.markAsDone = async () => {
+            if (!phone) {
+                alert("Please login again to save progress.");
+                return;
+            }
+
+            try {
+                document.getElementById('finishBtn').innerText = "Saving... ⏳";
+                const userRef = doc(db, "users", phone);
+                
+                // Firestore లో ఈ లెసన్ ఐడిని యాడ్ చేయడం
+                await updateDoc(userRef, {
+                    completedLessons: arrayUnion(topicId)
+                });
+
+                alert("Progress Saved! ✅ You are doing great!");
+                window.location.href = "user-home.html"; // తిరిగి హోమ్ కి వెళ్ళడం
+            } catch (error) {
+                console.error("Save Error:", error);
+                alert("Could not save progress. Returning to home.");
+                window.location.href = "user-home.html";
+            }
+        };
+
+        document.getElementById('finishBtn').addEventListener('click', markAsDone);
+
+        loadLesson();
+    </script>
+</body>
+</html>

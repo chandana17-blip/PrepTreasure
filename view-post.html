@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Read Article</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
+    <style>
+        :root { --gold: #FFD700; --orange: #FFA500; --dark: #1a1a1a; --gray: #f9f9f9; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--gray); padding-bottom: 50px; line-height: 1.6; }
+        
+        /* Header */
+        .header { background: #fff; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .header img { height: 35px; }
+        .back-btn { text-decoration: none; color: var(--orange); font-weight: bold; font-size: 14px; display: flex; align-items: center; gap: 5px; }
+
+        /* Article Container */
+        .container { max-width: 800px; margin: 20px auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 90%; }
+        .post-category { background: #fff3e0; color: var(--orange); padding: 4px 10px; border-radius: 5px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .post-title { font-size: 24px; margin: 15px 0; color: #333; line-height: 1.3; }
+        .post-meta { font-size: 12px; color: #999; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .post-content { font-size: 16px; color: #444; }
+
+        /* Ad Slots */
+        .ad-space { background: #fafafa; border: 1px dashed #ccc; padding: 20px; margin: 20px 0; text-align: center; color: #999; font-size: 12px; border-radius: 10px; }
+
+        /* More Articles Section */
+        .more-articles-section { max-width: 800px; margin: 30px auto; width: 90%; }
+        .more-articles-title { font-size: 18px; color: #333; margin-bottom: 15px; border-bottom: 2px solid var(--orange); padding-bottom: 5px; }
+        .articles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
+        .article-card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); text-decoration: none; color: #333; border: 1px solid #eee; transition: 0.3s; }
+        .article-card:hover { border-color: var(--orange); transform: translateY(-3px); background-color: #fffde7; }
+        .article-card h4 { margin: 0 0 10px 0; font-size: 15px; color: #333; line-height: 1.4; }
+        .article-card .card-cat { font-size: 11px; color: var(--orange); font-weight: bold; background: #fff3e0; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+
+        .footer { text-align: center; margin-top: 30px; font-size: 14px; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="user-home.html"><img src="logo.jpg" alt="PrepTreasure"></a>
+        <a href="user-home.html" class="back-btn">🏠 Home</a>
+    </div>
+
+    <div class="container">
+        <div id="post-data">
+            <p style="text-align:center; color:#999;">🔄 Opening the knowledge treasure... Please wait.</p>
+        </div>
+    </div>
+
+    <div class="more-articles-section">
+        <h3 class="more-articles-title">📚 మరికొన్ని ముఖ్యమైన వ్యాసాలు (More Articles)</h3>
+        <div id="articles-grid" class="articles-grid">
+            <p style="color: #999; font-size: 14px;">లోడ్ అవుతున్నాయి...</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2026 PrepTreasure - Your Path to Success
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, collection, getDocs, query, where, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const postId = urlParams.get('id');
+    const topicSlug = urlParams.get('topic');
+
+    const container = document.getElementById('post-data');
+
+    // డైనమిక్ ఎస్ఈఓ మెటా డిస్క్రిప్షన్ అప్‌డేట్ చేసే ఫంక్షన్
+    function updateSEOMeta(title, content) {
+        document.title = title + " - PrepTreasure";
+        const cleanDesc = content ? content.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 160) : "";
+        
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+            metaDesc = document.createElement('meta');
+            metaDesc.setAttribute('name', 'description');
+            document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute('content', cleanDesc);
+    }
+
+    // వెబ్ పేజీలో ఆర్టికల్ సమాచారాన్ని చూపించే ఫంక్షన్
+    function renderArticle(data) {
+        container.innerHTML = `
+            <span class="post-category">${data.category || 'Update'}</span>
+            <h1 class="post-title">${data.title}</h1>
+            <div class="post-meta">Published by PrepTreasure Team</div>
+            <div class="post-content">${data.content}</div>
+        `;
+    }
+
+    // 1. మెయిన్ ఆర్టికల్ లోడింగ్ లాజిక్
+    if (postId) {
+        getDoc(doc(db, "public_posts", postId)).then((snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                renderArticle(data);
+                updateSEOMeta(data.title, data.content);
+                
+                const finalSlug = data.slug ? data.slug : data.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
+                window.history.replaceState(null, "", `/posts/${finalSlug}`);
+                
+                loadMoreArticles(postId);
+            } else {
+                container.innerHTML = "<h3>Oops! This treasure is missing. 🔍</h3>";
+            }
+        }).catch((error) => {
+            console.error("Error loading article by ID:", error);
+            container.innerHTML = "<h3>Error loading article. Please refresh.</h3>";
+        });
+    } else if (topicSlug) {
+        const q = query(collection(db, "public_posts"), where("slug", "==", topicSlug));
+        getDocs(q).then((snapshot) => {
+            if (!snapshot.empty) {
+                const docSnap = snapshot.docs[0];
+                const data = docSnap.data();
+                
+                renderArticle(data);
+                updateSEOMeta(data.title, data.content);
+                loadMoreArticles(docSnap.id);
+            } else {
+                container.innerHTML = "<h3>Oops! This treasure is missing. 🔍</h3>";
+            }
+        }).catch((error) => {
+            console.error("Error loading article by Slug:", error);
+            container.innerHTML = "<h3>Error loading article. Please refresh.</h3>";
+        });
+    } else {
+        window.location.href = "user-home.html";
+    }
+
+    // 2. "More Articles" సెక్షన్ లో మిగిలిన ఆర్టికల్స్ ని చూపించే లాజిక్
+    function loadMoreArticles(excludeId) {
+        getDocs(query(collection(db, "public_posts"), limit(4))).then((querySnapshot) => {
+            const gridContainer = document.getElementById('articles-grid');
+            gridContainer.innerHTML = "";
+            let count = 0;
+
+            querySnapshot.forEach((docSnap) => {
+                if (docSnap.id !== excludeId && count < 3) {
+                    const articleData = docSnap.data();
+                    
+                    // 🔥 ఇక్కడ కింది లింకుల స్లగ్‌లను కూడా మన కొత్త సిస్టమ్ ప్రకారం డైనమిక్ గా అప్‌డేట్ చేసాను
+                    const nextSlug = articleData.slug ? articleData.slug : articleData.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
+                    
+                    gridContainer.innerHTML += `
+                        <a href="view-post.html?id=${docSnap.id}&topic=${nextSlug}" class="article-card">
+                            <h4>${articleData.title}</h4>
+                            <span class="card-cat">${articleData.category || 'Article'}</span>
+                        </a>
+                    `;
+                    count++;
+                }
+            });
+            
+            if(count === 0) {
+                gridContainer.innerHTML = "<p style='color:#999; font-size:14px;'>ప్రస్తుతానికి ఇతర వ్యాసాలు ఏవీ లేవు.</p>";
+            }
+        }).catch((error) => {
+            console.error("Error fetching more articles:", error);
+        });
+    }
+</script>
+
+</body>
+</html>
