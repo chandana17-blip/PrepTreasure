@@ -59,8 +59,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        // సవరించిన ఇంపోర్ట్ లైన్
-        import { getFirestore, loadBundle, getNamedQuery } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, loadBundle, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
@@ -78,15 +77,15 @@
             const container = document.getElementById('public-posts');
             
             try {
-                // 1. Download the static data.bundle file
+                // 1. స్టాటిక్ data.bundle ఫైల్ ని డౌన్‌లోడ్ చేయండి
                 const response = await fetch('data.bundle');
                 const bundleData = await response.arrayBuffer();
 
-                // 2. Load the bundle into Firestore
+                // 2. బండిల్ ని ఫైర్‌స్టోర్‌లోకి లోడ్ చేయండి
                 await loadBundle(db, bundleData);
 
-                // 3. Get the query we saved in the bundle
-                const querySnapshot = await getNamedQuery(db, 'latest-posts');
+                // 3. పబ్లిక్ పోస్ట్స్ డేటాను సాధారణ పద్ధతిలో పొందండి
+                const querySnapshot = await getDocs(collection(db, "public_posts"));
 
                 if (querySnapshot.empty) {
                     container.innerHTML = "<p>No updates available.</p>";
@@ -94,9 +93,18 @@
                 }
 
                 container.innerHTML = ""; 
-                querySnapshot.forEach((doc) => {
-                    const post = doc.data();
-                    const targetLink = `view-post.html?id=${doc.id}`;
+                
+                // కొత్త ఆర్టికల్స్ పైకి వచ్చేలా సాఫ్ట్ చేసుకోవడానికి
+                const sortedDocs = querySnapshot.docs.sort((a, b) => {
+                    const timeA = a.data().timestamp ? a.data().timestamp.toMillis() : 0;
+                    const timeB = b.data().timestamp ? b.data().timestamp.toMillis() : 0;
+                    return timeB - timeA;
+                });
+
+                sortedDocs.forEach((docSnap) => {
+                    const post = docSnap.data();
+                    const articleSlug = post.slug ? post.slug : post.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
+                    const targetLink = `view-post.html?id=${docSnap.id}&topic=${articleSlug}`;
                     
                     const tempDiv = document.createElement("div");
                     tempDiv.innerHTML = post.content || "";
