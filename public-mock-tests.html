@@ -1,0 +1,97 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrepTreasure - Free Mock Tests</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 700px; margin: auto; min-height: 70vh; }
+        h1 { text-align: center; color: #0f3460; margin-bottom: 25px; }
+        .back-btn { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #333; font-weight: bold; }
+        .test-card { 
+            background: #fff; border-radius: 10px; padding: 20px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #eee;
+        }
+        .test-info h3 { margin: 0; font-size: 18px; color: #222; }
+        .test-info p { margin: 5px 0 0; font-size: 13px; color: #777; }
+        .start-btn { 
+            background: #ffa500; color: white; padding: 10px 22px; 
+            border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; 
+            cursor: pointer; border: none;
+        }
+        .start-btn:hover { background: #e67e22; }
+        footer { background:#1a1a1a; color:white; padding:30px 20px; text-align:center; margin-top:50px; border-radius: 10px; }
+        footer a { color:#FFD700; text-decoration:none; margin:0 10px; font-weight:600; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="index.html" class="back-btn">⬅ Back to Home</a>
+    <h1>Available Free Mock Tests 🏆</h1>
+    <div id="public-mock-list"><p style="color:#666; font-weight: 500;">🔄 Loading free mock tests...</p></div>
+</div>
+
+<footer>
+    <a href="aboutus.html">About Us</a> | <a href="privacy.html">Privacy Policy</a> | <a href="terms.html">Terms & Conditions</a>
+    <p style="margin-top:15px; font-size:13px; color:#aaa;">© 2026 PrepTreasure</p>
+</footer>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, loadBundle } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
+        authDomain: "preptreasure.firebaseapp.com",
+        projectId: "preptreasure",
+        storageBucket: "preptreasure.firebasestorage.app",
+        messagingSenderId: "354456239925",
+        appId: "1:354456239925:web:0ace56b662b5b8b699d67c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function loadPublicMockTests() {
+        const list = document.getElementById('public-mock-list');
+        try {
+            const response = await fetch('data.bundle');
+            if (response.ok) await loadBundle(db, await response.arrayBuffer());
+
+            const mockSnap = await getDocs(collection(db, "mockTests"));
+            list.innerHTML = "";
+            let count = 0;
+            
+            mockSnap.forEach(dDoc => {
+                const d = dDoc.data();
+                // కేవలం accessType "free" ఉన్న టెస్ట్‌లు మాత్రమే గెస్ట్ వ్యూయర్‌కు కనిపిస్తాయి
+                if (d.accessType === "free") {
+                    count++;
+                    list.insertAdjacentHTML('beforeend', `
+                        <div class="test-card">
+                            <div class="test-info">
+                                <h3>📝 ${d.testName}</h3>
+                                <p>Mock Test • 30 Questions • Free Access</p>
+                            </div>
+                            <a href="mock-test.html?id=${dDoc.id}" class="start-btn">Take Test</a>
+                        </div>`);
+                }
+            });
+
+            if (count === 0) list.innerHTML = "<p style='color:#777;'>No free mock tests available right now.</p>";
+
+        } catch(e) {
+            console.error("Error:", e);
+            list.innerHTML = "<p style='color:#777;'>Error loading data.</p>";
+        }
+    }
+
+    loadPublicMockTests();
+</script>
+
+</body>
+</html>

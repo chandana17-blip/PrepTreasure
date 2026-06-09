@@ -35,6 +35,10 @@
         .btn-retry { background: var(--gold); color: var(--dark); }
 
         .lock-screen { text-align: center; padding: 50px 20px; }
+        
+        footer { background:#1a1a1a; color:white; padding:40px 20px; text-align:center; margin-top:50px; border-radius: 15px; }
+        footer a { color:#FFD700; text-decoration:none; margin:0 15px; font-weight:600; }
+        footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -72,6 +76,19 @@
         </div>
     </div>
 </div>
+
+<footer>
+    <div>
+        <a href="aboutus.html">About Us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms & Conditions</a>
+        <a href="disclaimer.html">Disclaimer</a>
+        <a href="refund-policy.html">Refund Policy</a>
+        <a href="contactus.html">Contact Us</a>
+        <a href="support.html">Support</a>
+    </div>
+    <p style="margin-top:25px; font-size:14px; color:#aaa;">© 2026 PrepTreasure - Your Path to Success</p>
+</footer>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -166,7 +183,7 @@
             }
 
             document.getElementById('test-title').innerText = testData.testName;
-            questionsData = testData.questions; 
+            questionsData = testData.questions || []; 
             document.getElementById('test-header').style.display = "block";
             document.getElementById('quiz-area').innerHTML = ""; 
             renderQuestions();
@@ -231,7 +248,6 @@
         document.getElementById('final-score').innerText = `${score} / ${questionsData.length}`;
 
         try {
-            // కేవలం లాగిన్ అయిన యూజర్లకే లీడర్‌బోర్డ్ స్కోర్ అప్‌డేట్ అవుతుంది
             if (phone !== "Unknown") {
                 const qResult = query(collection(db, "testResults"), where("studentPhone", "==", phone), where("testId", "==", testId));
                 const snap = await getDocs(qResult);
