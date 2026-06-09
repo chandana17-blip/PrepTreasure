@@ -49,7 +49,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, loadBundle, getDocsFromCache } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
@@ -63,50 +63,54 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // రియల్-టైమ్ సూపర్ ఫాస్ట్ లోడింగ్ ఫంక్షన్
-    function fetchArticlesFast() {
+    async function fetchArticlesFast() {
         const list = document.getElementById('all-articles-list');
         
-        onSnapshot(collection(db, "public_posts"), (snap) => {
+        try {
+            // బండిల్ ఫైల్ ని లోడ్ చేస్తున్నాము 
+            const response = await fetch('data.bundle');
+            if (!response.ok) throw new Error('Bundle network response was not ok');
+            const buffer = await response.arrayBuffer();
+            await loadBundle(db, buffer);
+            console.log("🔥 Firestore bundle loaded successfully in articles page!");
+        } catch (bundleError) {
+            console.warn("Bundle loading failed, falling back to cache reads:", bundleError);
+        }
+        
+        try {
+            const snap = await getDocsFromCache(collection(db, "public_posts"));
             
-            // 🔥 సర్వర్ ని పక్కాగా వెరిఫై చేసాకే.. ఒకవేళ నిజంగా డేటా లేకపోతేనే 'No updates' చూపిస్తుంది
-            if (snap.metadata.hasPendingWrites === false && snap.empty) {
+            if (snap.empty) {
                 list.innerHTML = "<div class='no-data'>No updates available yet. Check back soon!</div>";
                 return;
             }
 
-            if (!snap.empty) {
-                list.innerHTML = "";
-                
-                // జావాస్క్రిప్ట్ క్лయింట్-సైడ్ ద్వారానే కొత్త ఆర్టికల్స్ పైకి వచ్చేలా అమరిక
-                const sortedDocs = snap.docs.sort((a, b) => {
-                    const timeA = a.data().timestamp ? a.data().timestamp.toMillis() : 0;
-                    const timeB = b.data().timestamp ? b.data().timestamp.toMillis() : 0;
-                    return timeB - timeA;
-                });
+            list.innerHTML = "";
+            const docsArray = [];
+            snap.forEach(doc => docsArray.push({ id: doc.id, ...doc.data() }));
+            
+            // క్లయింట్-సైడ్ ద్వారా కొత్త ఆర్టికల్స్ పైకి వచ్చేలా సా，ర్టింగ్ (Sorting)
+            docsArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+            .forEach(post => {
+                const articleSlug = post.slug ? post.slug : post.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
+                const targetLink = `view-post.html?id=${post.id}&topic=${articleSlug}`;
 
-                sortedDocs.forEach(docSnap => {
-                    const post = docSnap.data();
-                    
-                    const articleSlug = post.slug ? post.slug : post.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
-                    const targetLink = `view-post.html?id=${docSnap.id}&topic=${articleSlug}`;
+                const cleanText = post.content ? post.content.replace(/<\/?[^>]+(>|$)/g, "") : "";
+                const shortDesc = cleanText.substring(0, 150);
 
-                    const cleanText = post.content ? post.content.replace(/<\/?[^>]+(>|$)/g, "") : "";
-                    const shortDesc = cleanText.substring(0, 150);
+                list.innerHTML += `
+                    <a href="${targetLink}" class="article-card">
+                        <span class="category">${post.category || 'Update'}</span>
+                        <h3>${post.title}</h3>
+                        <p>${shortDesc}...</p>
+                        <div style="text-align:right; color:var(--orange); font-weight:bold; margin-top:10px; font-size:13px;">Read Full Update →</div>
+                    </a>`;
+            });
 
-                    list.innerHTML += `
-                        <a href="${targetLink}" class="article-card">
-                            <span class="category">${post.category || 'Update'}</span>
-                            <h3>${post.title}</h3>
-                            <p>${shortDesc}...</p>
-                            <div style="text-align:right; color:var(--orange); font-weight:bold; margin-top:10px; font-size:13px;">Read Full Update →</div>
-                        </a>`;
-                });
-            }
-        }, (error) => {
-            console.error("Error loading updates:", error);
+        } catch (error) {
+            console.error("Error loading updates from cache:", error);
             list.innerHTML = "<div class='no-data'>Failed to load data. Please refresh the page!</div>";
-        });
+        }
     }
 
     fetchArticlesFast();

@@ -21,8 +21,14 @@
         .content-section { max-width: 1100px; margin: 30px auto; padding: 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
         .article-card { background: #fff; padding: 25px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-left: 6px solid var(--orange); }
         .sidebar { background: #fff; padding: 25px; border-radius: 12px; height: fit-content; box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: sticky; top: 90px; }
+        .sidebar ul { padding-left: 20px; }
+        .sidebar li { margin-bottom: 10px; }
+        .sidebar a { color: #333; text-decoration: none; font-weight: 500; }
+        .sidebar a:hover { color: var(--orange); }
         footer { background: var(--dark); color: white; padding: 40px 20px; text-align: center; margin-top: 50px; }
-        footer a { color: var(--gold); text-decoration: none; margin: 0 10px; }
+        footer div { margin-bottom: 15px; flex-wrap: wrap; display: flex; justify-content: center; gap: 10px; }
+        footer a { color: var(--gold); text-decoration: none; margin: 0 10px; font-weight: 600; }
+        footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -51,11 +57,24 @@
         <aside class="sidebar">
             <h3>📌 Quick Links</h3>
             <ul>
-                <li><a href="signup.html">👉 Free Mock Tests</a></li>
-                <li><a href="signup.html">👉 Grammar Notes</a></li>
+                <li><a href="user-home.html">👉 Free Mock Tests</a></li>
+                <li><a href="topics.html">👉 Grammar Notes</a></li>
             </ul>
         </aside>
     </main>
+
+    <footer>
+        <div>
+            <a href="aboutus.html">About Us</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="terms.html">Terms & Conditions</a>
+            <a href="disclaimer.html">Disclaimer</a>
+            <a href="refund-policy.html">Refund Policy</a>
+            <a href="contactus.html">Contact Us</a>
+            <a href="support.html">Support</a>
+        </div>
+        <p style="margin-top: 15px; font-size: 14px; color: #aaa;">© 2026 PrepTreasure - Your Path to Success</p>
+    </footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -84,7 +103,7 @@
                 // 2. బండిల్ ని ఫైర్‌స్టోర్‌లోకి లోడ్ చేయండి
                 await loadBundle(db, bundleData);
 
-                // 3. పబ్లిక్ పోస్ట్స్ డేటాను సాధారణ పద్ధతిలో పొందండి
+                // 3. పబ్లిక్ పోస్ట్స్ డేటాను పొందండి
                 const querySnapshot = await getDocs(collection(db, "public_posts"));
 
                 if (querySnapshot.empty) {
@@ -94,7 +113,6 @@
 
                 container.innerHTML = ""; 
                 
-                // కొత్త ఆర్టికల్స్ పైకి వచ్చేలా సాఫ్ట్ చేసుకోవడానికి
                 const sortedDocs = querySnapshot.docs.sort((a, b) => {
                     const timeA = a.data().timestamp ? a.data().timestamp.toMillis() : 0;
                     const timeB = b.data().timestamp ? b.data().timestamp.toMillis() : 0;

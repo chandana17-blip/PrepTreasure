@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PrepTreasure - Topics</title>
     <link rel="icon" type="image/png" href="logo.jpg">
-	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; padding-bottom: 0; }
+        .container { max-width: 600px; margin: auto; min-height: 70vh; }
         h1 { text-align: center; color: #333; }
 
         .content-header {
@@ -59,6 +59,10 @@
         
         /* Back Button */
         .back-btn { display: inline-block; margin-bottom: 15px; text-decoration: none; color: #333; font-weight: bold; }
+
+        footer { background:#1a1a1a; color:white; padding:40px 20px; text-align:center; margin-top:50px; }
+        footer a { color:#FFD700; text-decoration:none; margin:0 15px; font-weight:600; }
+        footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -107,10 +111,22 @@
     </div>
 </div>
 
+<footer>
+    <div>
+        <a href="aboutus.html">About Us</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms & Conditions</a>
+        <a href="disclaimer.html">Disclaimer</a>
+        <a href="refund-policy.html">Refund Policy</a>
+        <a href="contactus.html">Contact Us</a>
+        <a href="support.html">Support</a>
+    </div>
+    <p style="margin-top:25px; font-size:14px; color:#aaa;">© 2026 PrepTreasure - Your Path to Success</p>
+</footer>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 
-    // మీ కొత్త కాన్ఫిగరేషన్
     const firebaseConfig = {
         apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
         authDomain: "preptreasure.firebaseapp.com",
@@ -121,12 +137,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
-
-    // Login Check: యూజర్ లాగిన్ అవ్వకపోతే వెనక్కి పంపడం
-    const userPhone = localStorage.getItem("user_phone");
-    if (!userPhone) {
-        window.location.href = "login.html";
-    }
+    // లాగిన్ చెక్ పూర్తిగా తొలగించబడింది, విజిటర్స్ అందరికీ పేజీ ఓపెన్ అవుతుంది.
 </script>
 
 <script>

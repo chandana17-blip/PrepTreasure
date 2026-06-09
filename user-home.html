@@ -9,7 +9,7 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
     <style>
         :root { 
-            --primary-blue: #2f8d46; /* GfG style green/blue */
+            --primary-blue: #2f8d46;
             --dark-blue: #0f3460;
             --bg-gray: #f4f7f6;
             --white: #ffffff;
@@ -20,7 +20,6 @@
         
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background-color: var(--bg-gray); display: flex; }
 
-        /* Sidebar Styling (GeeksforGeeks style) */
         .sidebar { 
             width: 260px; background: var(--white); height: 100vh; position: fixed; 
             border-right: 1px solid #ddd; transition: 0.3s; z-index: 1001; overflow-y: auto;
@@ -35,7 +34,6 @@
         }
         .nav-item:hover { background: #f0fdf4; color: var(--primary-blue); border-left-color: var(--primary-blue); }
         
-        /* Main Content Area */
         .main-content { margin-left: 260px; width: calc(100% - 260px); min-height: 100vh; transition: 0.3s; }
         
         .top-header { 
@@ -46,7 +44,6 @@
 
         .hamburger { display: none; font-size: 24px; cursor: pointer; color: var(--primary-blue); }
 
-        /* Cards Layout */
         .content-body { padding: 30px; max-width: 1000px; margin: auto; }
         .section-title { font-size: 24px; color: var(--dark-blue); margin-bottom: 20px; border-left: 5px solid var(--primary-blue); padding-left: 15px; }
 
@@ -60,10 +57,9 @@
 
         .start-btn { 
             background: var(--primary-blue); color: white; padding: 8px 20px; 
-            border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; text-align: center;
+            border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; text-align: center; cursor: pointer;
         }
 
-        /* Dual-Tab Styling for Separating Lessons and Exercises */
         .tab-box { display: flex; background: #e0e0e0; border-radius: 8px; padding: 5px; margin-bottom: 20px; max-width: 300px; }
         .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; font-weight: bold; cursor: pointer; border-radius: 6px; text-align: center; }
         .tab-btn.active { background: white; color: var(--primary-blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -72,7 +68,6 @@
         .profile-links a { color: #555; text-decoration: none; font-weight: 600; cursor: pointer; }
         .profile-links a:hover { color: var(--primary-blue); }
 
-        /* Mobile Responsive */
         @media (max-width: 768px) {
             .sidebar { left: -260px; }
             .sidebar.active { left: 0; }
@@ -150,7 +145,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, onSnapshot, doc, loadBundle, getDocsFromCache, query, where } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
@@ -193,7 +188,6 @@
         if(window.innerWidth < 768) toggleSidebar();
     };
 
-    // 💡 Active Tab Toggling Engine
     window.switchLibraryTab = (target) => {
         const lessonsDiv = document.getElementById("lessons-tab-content");
         const exercisesDiv = document.getElementById("exercises-tab-content");
@@ -213,46 +207,54 @@
         }
     };
 
-    // --- Fetch User Plan and Load Data ---
+    // --- Load Bundle and Data ---
     let userPlan = localStorage.getItem("user_plan") || "free";
 
-    if (phone) {
-        onSnapshot(doc(db, "users", phone), (snap) => {
-            if (snap.exists()) {
-                userPlan = (snap.data().plan || "free").toLowerCase();
-                localStorage.setItem("user_plan", userPlan);
-                loadData(userPlan);
-            }
-        });
-    } else { loadData("free"); }
+    async function initializeDashboard() {
+        try {
+            const response = await fetch('data.bundle');
+            if (!response.ok) throw new Error('Bundle network response was not ok');
+            const buffer = await response.arrayBuffer();
+            await loadBundle(db, buffer);
+            console.log("🔥 Firestore bundle loaded successfully in dashboard!");
+        } catch (bundleError) {
+            console.warn("Bundle loading failed, falling back to direct network/cache reads:", bundleError);
+        }
 
-    function loadData(plan) {
-        // 1. 🔥 'topics' కలెక్షన్ లోడ్ సిస్టమ్ (Lessons మరియు Exercises వేరు చేసేలా)
-        onSnapshot(collection(db, "topics"), (snap) => {
+        if (phone) {
+            onSnapshot(doc(db, "users", phone), (snap) => {
+                if (snap.exists()) {
+                    userPlan = (snap.data().plan || "free").toLowerCase();
+                    localStorage.setItem("user_plan", userPlan);
+                    loadDataFromCache(userPlan);
+                }
+            });
+        } else { 
+            loadDataFromCache("free"); 
+        }
+    }
+
+    async function loadDataFromCache(plan) {
+        // 1. Topics (Lessons & Exercises)
+        try {
+            const snap = await getDocsFromCache(collection(db, "topics"));
             const lessonsList = document.getElementById('dynamic-list'); 
             const exercisesList = document.getElementById('dynamic-exercise-list'); 
             
-            if (snap.metadata.hasPendingWrites === false && snap.empty) {
+            if (snap.empty) {
                 lessonsList.innerHTML = "<p style='color:#777;'>No lessons available right now.</p>";
                 exercisesList.innerHTML = "<p style='color:#777;'>No practical exercises available right now.</p>";
-                return;
-            }
-
-            if (!snap.empty) {
+            } else {
                 lessonsList.innerHTML = "";
                 exercisesList.innerHTML = "";
 
-                const sortedLessons = snap.docs.sort((a, b) => {
-                    const timeA = a.data().createdAt ? a.data().createdAt.toMillis() : 0;
-                    const timeB = b.data().createdAt ? b.data().createdAt.toMillis() : 0;
-                    return timeA - timeB;
-                });
-
-                sortedLessons.forEach(dDoc => {
-                    const d = dDoc.data();
+                const docsArray = [];
+                snap.forEach(doc => docsArray.push({ id: doc.id, ...doc.data() }));
+                
+                docsArray.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+                .forEach(d => {
                     const locked = d.accessType === "paid" && plan === "free";
                     
-                    // contentType బట్టి లెసన్ లేదా ఎక్సర్‌సైజ్‌గా విడగొడుతున్నాము
                     if (d.contentType === "exercise") {
                         exercisesList.insertAdjacentHTML('beforeend', `
                             <div class="lesson-card" style="border-left: 5px solid var(--primary-blue);">
@@ -260,97 +262,91 @@
                                     <h3>📝 Practice Exercise: ${d.topicTitle}</h3>
                                     <p>Interactive MCQ Quiz • Solve to earn progress points</p>
                                 </div>
-                                <a href="#" class="start-btn" style="background: var(--primary-blue);" onclick="checkAccess(${locked}, 'lesson-view.html?id=${dDoc.id}&mode=quiz')">Solve</a>
+                                <a class="start-btn" style="background: var(--primary-blue);" onclick="checkAccess(${locked}, 'lesson-view.html?id=${d.id}&mode=quiz')">Solve</a>
                             </div>`);
                     } else {
-                        // కేవలం లెసన్స్ మాత్రమే ఇక్కడ లోడ్ అవుతాయి
                         lessonsList.insertAdjacentHTML('beforeend', `
                             <div class="lesson-card">
                                 <div class="lesson-info">
                                     <h3>${locked ? "🔒" : "📖"} ${d.topicTitle}</h3>
                                     <p>${d.mainCategory || 'English Grammar • Core Notes'}</p>
                                 </div>
-                                <a href="#" class="start-btn" onclick="checkAccess(${locked}, 'lesson-view.html?id=${dDoc.id}&mode=lesson')">Start</a>
+                                <a class="start-btn" onclick="checkAccess(${locked}, 'lesson-view.html?id=${d.id}&mode=lesson')">Start</a>
                             </div>`);
                     }
                 });
-
-                if(lessonsList.innerHTML === "") {
-                    lessonsList.innerHTML = "<p style='color:#777;'>No lessons updated yet.</p>";
-                }
-                if(exercisesList.innerHTML === "") {
-                    exercisesList.innerHTML = "<p style='color:#777;'>No exercises updated yet.</p>";
-                }
             }
-        });
+        } catch(e) {
+            console.error("Cache read error for topics:", e);
+        }
 
-        // 2. Load Public Articles
-        onSnapshot(collection(db, "public_posts"), (snap) => {
+        // 2. Public Articles (Job Alerts)
+        try {
+            const artSnap = await getDocsFromCache(collection(db, "public_posts"));
             const artList = document.getElementById('articles-list'); 
+            artList.innerHTML = "";
             
-            if (snap.metadata.hasPendingWrites === false && snap.empty) { 
-                artList.innerHTML = "<p style='color:#777;'>ప్రస్తుతానికి ఎలాంటి ఆర్టికల్స్ లేవు.</p>"; 
-                return;
-            }
-
-            if (!snap.empty) {
-                artList.innerHTML = "";
-                const sortedArticles = snap.docs.sort((a, b) => {
-                    const timeA = a.data().timestamp ? a.data().timestamp.toMillis() : 0;
-                    const timeB = b.data().timestamp ? b.data().timestamp.toMillis() : 0;
-                    return timeB - timeA;
-                });
-
-                sortedArticles.forEach(dDoc => {
-                    const d = dDoc.data();
-                    if (d.category === "Job Alert") {
-                        const articleSlug = d.slug ? d.slug : d.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
-                        const targetLink = `view-post.html?id=${dDoc.id}&topic=${articleSlug}`;
-
-                        artList.insertAdjacentHTML('beforeend', `
-                            <div class="lesson-card" style="border-left: 5px solid var(--orange);">
-                                <div class="lesson-info">
-                                    <h3>📰 ${d.title}</h3>
-                                    <p>${d.category || 'General Article'}</p>
-                                </div>
-                                <a href="${targetLink}" class="start-btn" style="background:var(--orange);">Read</a>
-                            </div>`);
-                    }
-                });
-            }
-        });
-
-        // 3. Load Mock Tests
-        onSnapshot(collection(db, "mockTests"), (snap) => {
-            const list = document.getElementById('mock-list'); 
+            const articlesArray = [];
+            artSnap.forEach(doc => articlesArray.push({ id: doc.id, ...doc.data() }));
             
-            if (snap.metadata.hasPendingWrites === false && snap.empty) {
-                list.innerHTML = "<p style='color:#777;'>No mock tests available right now.</p>";
-                return;
-            }
+            articlesArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+            .forEach(d => {
+                if (d.category === "Job Alert") {
+                    const articleSlug = d.slug ? d.slug : d.title.replace(/[^\w\s]/gi, '').replace(/\s+/g, '-').toLowerCase();
+                    const targetLink = `view-post.html?id=${d.id}&topic=${articleSlug}`;
 
-            if (!snap.empty) {
-                list.innerHTML = "";
-                snap.forEach(dDoc => {
-                    const d = dDoc.data();
-                    const locked = d.accessType === "paid" && plan === "free";
-                    list.insertAdjacentHTML('beforeend', `
-                        <div class="lesson-card" style="border-left: 5px solid #ffa500;">
+                    artList.insertAdjacentHTML('beforeend', `
+                        <div class="lesson-card" style="border-left: 5px solid var(--orange);">
                             <div class="lesson-info">
-                                <h3>📝 ${d.testName} ${locked ? "🔒" : ""}</h3>
-                                <p>Mock Test • 30 Questions</p>
+                                <h3>📰 ${d.title}</h3>
+                                <p>${d.category || 'General Article'}</p>
                             </div>
-                            <a href="#" class="start-btn" style="background:#ffa500;" onclick="checkAccess(${locked}, 'mock-test.html?id=${dDoc.id}')">Take Test</a>
+                            <a href="${targetLink}" class="start-btn" style="background:var(--orange);">Read</a>
                         </div>`);
-                });
-            }
-        });
+                }
+            });
+        } catch(e) {
+            console.error("Cache read error for articles:", e);
+        }
+
+        // 3. Mock Tests
+        try {
+            const mockSnap = await getDocsFromCache(collection(db, "mockTests"));
+            const list = document.getElementById('mock-list'); 
+            list.innerHTML = "";
+            
+            mockSnap.forEach(dDoc => {
+                const d = dDoc.data();
+                const locked = d.accessType === "paid" && plan === "free";
+                list.insertAdjacentHTML('beforeend', `
+                    <div class="lesson-card" style="border-left: 5px solid #ffa500;">
+                        <div class="lesson-info">
+                            <h3>📝 ${d.testName} ${locked ? "🔒" : ""}</h3>
+                            <p>Mock Test • 30 Questions</p>
+                        </div>
+                        <a class="start-btn" style="background:#ffa500;" onclick="checkAccess(${locked}, 'mock-test.html?id=${dDoc.id}')">Take Test</a>
+                    </div>`);
+            });
+        } catch(e) {
+            console.error("Cache read error for mock tests:", e);
+        }
     }
 
+    // లాగిన్ లేని విజిటర్స్ పెయిడ్ కంటెంట్ క్లిక్ చేస్తే లాగిన్/ప్లాన్ కొనుగోలు పేజీకి వెళ్లేలా సవరించబడింది
     window.checkAccess = (locked, url) => { 
-        if(locked) { alert("Upgrade to Premium to unlock this! 💰"); window.location.href="purchase.html"; }
-        else window.location.href = url;
+        const currentPhone = localStorage.getItem("user_phone");
+        if (locked && !currentPhone) {
+            alert("దయచేసి ఈ టెస్ట్ రాయడానికి ముందు లాగిన్ అవ్వండి! 🔒");
+            window.location.href = "login.html";
+        } else if (locked && currentPhone) {
+            alert("Upgrade to Premium to unlock this! 💰"); 
+            window.location.href = "purchase.html"; 
+        } else {
+            window.location.href = url;
+        }
     };
+
+    initializeDashboard();
 </script>
 </body>
 </html>

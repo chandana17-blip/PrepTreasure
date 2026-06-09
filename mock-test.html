@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PrepTreasure - Weekly Mock Test</title>
     <link rel="icon" type="image/png" href="logo.png">
-	  <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
+    <meta name="google-site-verification" content="ZTReLFgnwMXFIpRU289kSL_ZFm3DQTZLnLpkF6LS7l8" />
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9080292270571763" crossorigin="anonymous"></script>
     <style>
         :root { --gold: #FFD700; --dark: #1a1a1a; --success: #28a745; --danger: #dc3545; }
@@ -75,7 +75,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, addDoc, serverTimestamp, where, query, getDocs, loadBundle } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDbsMFkklrDxFlPkFB9_-7lwJArl8WetYU",
@@ -98,65 +98,81 @@
     let timerInterval;
 
     async function loadMockTest() {
-        const phone = localStorage.getItem("user_phone");
-
-        // 1. Login Check
-        if (!phone) {
-            alert("దయచేసి ముందు లాగిన్ అవ్వండి!");
-            window.location.href = "login.html";
+        if(!testId) {
+            alert("No Test ID found!");
+            window.location.href = "user-home.html";
             return;
         }
 
-        if(!testId) return alert("No Test ID found!");
-
         try {
-            const testDoc = await getDoc(doc(db, "mockTests", testId));
-            const userSnap = await getDoc(doc(db, "users", phone));
-
-            if (testDoc.exists() && userSnap.exists()) {
-                const testData = testDoc.data();
-                const userData = userSnap.data();
-                
-                const userPlan = (userData.plan || "free").toLowerCase();
-                const testAccess = (testData.accessType || "paid").toLowerCase();
-
-                // 2. Access Check Logic
-                if (testAccess === "paid" && userPlan === "free") {
-                    document.getElementById('main-test-wrapper').innerHTML = `
-                        <div class="lock-screen">
-                            <h1>🔒 Premium Content</h1>
-                            <p>This Grand Mock Test is only for Premium Members.</p>
-                            <a href="purchase.html" style="display:inline-block; padding:15px 30px; background:var(--gold); color:black; text-decoration:none; border-radius:10px; font-weight:bold; margin-top:20px;">Unlock Treasure Now 💰</a>
-                            <br><br><a href="user-home.html">Back to Home</a>
-                        </div>`;
-                    return;
+            try {
+                const bundleResp = await fetch('data.bundle');
+                if (bundleResp.ok) {
+                    await loadBundle(db, await bundleResp.arrayBuffer());
+                    console.log("🔥 Bundle loaded in mock test page.");
                 }
-
-                // 3. Time Lock Check
-                const now = new Date();
-                const currentHour = now.getHours();
-                if (currentHour < 11 || currentHour >= 24) {
-                    document.getElementById('main-test-wrapper').innerHTML = `
-                        <div class="lock-screen">
-                            <h1>🕒 Test is Locked!</h1>
-                            <p>Grand Mock Tests are live only between 11:00 AM and 12:00 AM.</p>
-                            <br><a href="user-home.html" style="color:blue; font-weight:bold;">← Back to Home</a>
-                        </div>`;
-                    return;
-                }
-
-                // 4. Load Data
-                document.getElementById('test-title').innerText = testData.testName;
-                questionsData = testData.questions; 
-                document.getElementById('test-header').style.display = "block";
-                document.getElementById('quiz-area').innerHTML = ""; // Clear "Verifying" message
-                renderQuestions();
-                startTimer();
-                document.getElementById('submit-btn').style.display = "block";
-
-            } else {
-                document.getElementById('quiz-area').innerHTML = "<h2>Data Not Found!</h2>";
+            } catch (bErr) {
+                console.warn("Bundle fallback to direct load.");
             }
+
+            const testDoc = await getDoc(doc(db, "mockTests", testId));
+
+            if (!testDoc.exists()) {
+                document.getElementById('quiz-area').innerHTML = "<h2>Data Not Found!</h2>";
+                return;
+            }
+
+            const testData = testDoc.data();
+            const testAccess = (testData.accessType || "paid").toLowerCase();
+            
+            // పెయిడ్ టెస్ట్ అయితే లాగిన్ మరియు ప్లాన్ చెక్ చేయడం
+            if (testAccess === "paid") {
+                const phone = localStorage.getItem("user_phone");
+                if (!phone) {
+                    alert("దయచేసి ముందు లాగిన్ అవ్వండి!");
+                    window.location.href = "login.html";
+                    return;
+                }
+                
+                const userSnap = await getDoc(doc(db, "users", phone));
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    const userPlan = (userData.plan || "free").toLowerCase();
+                    
+                    if (userPlan === "free") {
+                        document.getElementById('main-test-wrapper').innerHTML = `
+                            <div class="lock-screen">
+                                <h1>🔒 Premium Content</h1>
+                                <p>This Grand Mock Test is only for Premium Members.</p>
+                                <a href="purchase.html" style="display:inline-block; padding:15px 30px; background:var(--gold); color:black; text-decoration:none; border-radius:10px; font-weight:bold; margin-top:20px;">Buy Site Starter Plan to Unlock 💰</a>
+                                <br><br><a href="user-home.html">Back to Home</a>
+                            </div>`;
+                        return;
+                    }
+                }
+            }
+
+            // టైమ్ లాక్ కండిషన్
+            const now = new Date();
+            const currentHour = now.getHours();
+            if (currentHour < 11) {
+                document.getElementById('main-test-wrapper').innerHTML = `
+                    <div class="lock-screen">
+                        <h1>🕒 Test is Locked!</h1>
+                        <p>Grand Mock Tests are live only between 11:00 AM and 12:00 AM.</p>
+                        <br><a href="user-home.html" style="color:blue; font-weight:bold;">← Back to Home</a>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('test-title').innerText = testData.testName;
+            questionsData = testData.questions; 
+            document.getElementById('test-header').style.display = "block";
+            document.getElementById('quiz-area').innerHTML = ""; 
+            renderQuestions();
+            startTimer();
+            document.getElementById('submit-btn').style.display = "block";
+
         } catch (e) {
             console.error("Error:", e);
             alert("Something went wrong!");
@@ -215,18 +231,23 @@
         document.getElementById('final-score').innerText = `${score} / ${questionsData.length}`;
 
         try {
-            const qResult = query(collection(db, "testResults"), where("studentPhone", "==", phone), where("testId", "==", testId));
-            const snap = await getDocs(qResult);
+            // కేవలం లాగిన్ అయిన యూజర్లకే లీడర్‌బోర్డ్ స్కోర్ అప్‌డేట్ అవుతుంది
+            if (phone !== "Unknown") {
+                const qResult = query(collection(db, "testResults"), where("studentPhone", "==", phone), where("testId", "==", testId));
+                const snap = await getDocs(qResult);
 
-            if (snap.empty) {
-                await addDoc(collection(db, "testResults"), {
-                    studentName: name, studentPhone: phone, score: score, total: questionsData.length,
-                    testId: testId, testName: document.getElementById('test-title').innerText,
-                    timestamp: serverTimestamp()
-                });
-                document.getElementById('leaderboard-msg').innerText = "✅ First attempt saved to Leaderboard!";
+                if (snap.empty) {
+                    await addDoc(collection(db, "testResults"), {
+                        studentName: name, studentPhone: phone, score: score, total: questionsData.length,
+                        testId: testId, testName: document.getElementById('test-title').innerText,
+                        timestamp: serverTimestamp()
+                    });
+                    document.getElementById('leaderboard-msg').innerText = "✅ First attempt saved to Leaderboard!";
+                } else {
+                    document.getElementById('leaderboard-msg').innerText = "💡 Practice mode: Score not updated on Leaderboard.";
+                }
             } else {
-                document.getElementById('leaderboard-msg').innerText = "💡 Practice mode: Score not updated on Leaderboard.";
+                document.getElementById('leaderboard-msg').innerText = "🌐 Guest mode: Attempt completed.";
             }
         } catch (e) { console.error(e); }
     }
@@ -261,7 +282,6 @@
         });
     }
 
-    // ముఖ్యం: ఫంక్షన్ కాల్ చేయడం
     loadMockTest();
 </script>
 </body>
