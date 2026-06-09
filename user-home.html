@@ -63,7 +63,7 @@
             border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 14px; text-align: center;
         }
 
-        /* 💡 Dual-Tab Styling for Separating Lessons and Exercises */
+        /* Dual-Tab Styling for Separating Lessons and Exercises */
         .tab-box { display: flex; background: #e0e0e0; border-radius: 8px; padding: 5px; margin-bottom: 20px; max-width: 300px; }
         .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; font-weight: bold; cursor: pointer; border-radius: 6px; text-align: center; }
         .tab-btn.active { background: white; color: var(--primary-blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -227,7 +227,7 @@
     } else { loadData("free"); }
 
     function loadData(plan) {
-        // 1. 🔥 'topics' కలెక్షన్ లోడ్ సిస్టమ్ (Lessons మరియు Exercises మ్యాపింగ్)
+        // 1. 🔥 'topics' కలెక్షన్ లోడ్ సిస్టమ్ (Lessons మరియు Exercises వేరు చేసేలా)
         onSnapshot(collection(db, "topics"), (snap) => {
             const lessonsList = document.getElementById('dynamic-list'); 
             const exercisesList = document.getElementById('dynamic-exercise-list'); 
@@ -252,18 +252,8 @@
                     const d = dDoc.data();
                     const locked = d.accessType === "paid" && plan === "free";
                     
-                    // Lessons విభాగం
-                    lessonsList.insertAdjacentHTML('beforeend', `
-                        <div class="lesson-card">
-                            <div class="lesson-info">
-                                <h3>${locked ? "🔒" : "📖"} ${d.topicTitle}</h3>
-                                <p>${d.mainCategory || 'English Grammar • Core Notes'}</p>
-                            </div>
-                            <a href="#" class="start-btn" onclick="checkAccess(${locked}, 'lesson-view.html?id=${dDoc.id}&mode=lesson')">Start</a>
-                        </div>`);
-
-                    // 💡 Exercises విభాగం: అడ్మిన్ ద్వారా పంపిన 'ex1' ఫీల్డ్‌లో క్విజ్ ఉంటే ఇక్కడ ఆటోమేటిక్‌గా వస్తుంది
-                    if (d.ex1 && d.ex1.length > 0) {
+                    // contentType బట్టి లెసన్ లేదా ఎక్సర్‌సైజ్‌గా విడగొడుతున్నాము
+                    if (d.contentType === "exercise") {
                         exercisesList.insertAdjacentHTML('beforeend', `
                             <div class="lesson-card" style="border-left: 5px solid var(--primary-blue);">
                                 <div class="lesson-info">
@@ -272,11 +262,24 @@
                                 </div>
                                 <a href="#" class="start-btn" style="background: var(--primary-blue);" onclick="checkAccess(${locked}, 'lesson-view.html?id=${dDoc.id}&mode=quiz')">Solve</a>
                             </div>`);
+                    } else {
+                        // కేవలం లెసన్స్ మాత్రమే ఇక్కడ లోడ్ అవుతాయి
+                        lessonsList.insertAdjacentHTML('beforeend', `
+                            <div class="lesson-card">
+                                <div class="lesson-info">
+                                    <h3>${locked ? "🔒" : "📖"} ${d.topicTitle}</h3>
+                                    <p>${d.mainCategory || 'English Grammar • Core Notes'}</p>
+                                </div>
+                                <a href="#" class="start-btn" onclick="checkAccess(${locked}, 'lesson-view.html?id=${dDoc.id}&mode=lesson')">Start</a>
+                            </div>`);
                     }
                 });
 
+                if(lessonsList.innerHTML === "") {
+                    lessonsList.innerHTML = "<p style='color:#777;'>No lessons updated yet.</p>";
+                }
                 if(exercisesList.innerHTML === "") {
-                    exercisesList.innerHTML = "<p style='color:#777;'>No exercises updated for current topics yet.</p>";
+                    exercisesList.innerHTML = "<p style='color:#777;'>No exercises updated yet.</p>";
                 }
             }
         });
